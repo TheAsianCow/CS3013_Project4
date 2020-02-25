@@ -1,5 +1,4 @@
 C     := gcc
-LIBS += -pthread
 
 SRCS   := mem_man.c
 
@@ -10,7 +9,7 @@ PROGS  := ${SRCS:.c=}
 all: ${PROGS}
 
 ${PROGS} : % : %.o Makefile
-	${CC} $< -o $@ ${LIBS}
+	${CC} $< -o $@
 
 clean:
 	rm -f ${PROGS} ${OBJS}
