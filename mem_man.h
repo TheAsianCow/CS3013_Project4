@@ -10,7 +10,8 @@
 typedef unsigned char addr;
 
 int main(int argc, char* argv[]);
-int execute(int pid, char* instruction, addr v_address, int val);
+void parse(char* line, char** args);
+int isValidArgs(char** args);
 int allocate(int pid, char* instruction, addr v_address, int val);
 int store(int pid, char* instruction, addr v_address, int val);
 int load(int pid, char* instruction, addr v_address);
