@@ -50,32 +50,35 @@ int main(int argc, char* argv[]){
    //     writing content to stdout 
    //    puts(str);
    // }
-    while(correct_input == 0){
-    	printf("Instructions? ");
-    	// scanf("%d %s %c %d\n", &pid, instruction, &v_address, &value);
-    	fgets (line, 50, stdin);
-    	num_args = parse(line, args);
-    	// printf("line: %s\n", line);
-    	// printf("%d\t%s\t%d\t%d\n", pid, instruction, v_address, value);
-    	if (isValidArgs(args, num_args)) {
-    		pid = atoi(args[0]);
-    		instruction = args[1];
-    		// printf("args 2 = %s\n", args[2]);
-    		v_address = (unsigned char) atoi(args[2]);
-    		value = atoi(args[3]);
-    		if (strcmp(instruction, "allocate") == 0) allocate(pid, instruction, v_address, value);
-			if (strcmp(instruction, "store") == 0) store(pid, instruction, v_address, value);
-			if (strcmp(instruction, "load") == 0) load(pid, instruction, v_address);
-			correct_input = 1;
-    	}
-    	else {
-    		printf("Your arguments were incorrect.\nThe correct format is: (process id,instruction,virtual address,value)\n");
-    		printf("\t- process id: int in range [0, 3]\n");
-    		printf("\t- instruction: either \"allocate\", \"store\", or \"load\"\n");
-    		printf("\t- virtual address: int in range [0, 63]\n");
-    		printf("\t- value: int in range [0, 255]\n");
-    	}
-    }
+    while(1) {
+	    while(correct_input == 0){
+	    	printf("Instructions? ");
+	    	// scanf("%d %s %c %d\n", &pid, instruction, &v_address, &value);
+	    	fgets (line, 50, stdin);
+	    	num_args = parse(line, args);
+	    	// printf("line: %s\n", line);
+	    	// printf("%d\t%s\t%d\t%d\n", pid, instruction, v_address, value);
+	    	if (isValidArgs(args, num_args)) {
+	    		pid = atoi(args[0]);
+	    		instruction = args[1];
+	    		// printf("args 2 = %s\n", args[2]);
+	    		v_address = (unsigned char) atoi(args[2]);
+	    		value = atoi(args[3]);
+	    		if (strcmp(instruction, "allocate") == 0) allocate(pid, instruction, v_address, value);
+				if (strcmp(instruction, "store") == 0) store(pid, instruction, v_address, value);
+				if (strcmp(instruction, "load") == 0) load(pid, instruction, v_address);
+				correct_input = 1;
+	    	}
+	    	else {
+	    		printf("Your arguments were incorrect.\nThe correct format is: (process id,instruction,virtual address,value)\n");
+	    		printf("\t- process id: int in range [0, 3]\n");
+	    		printf("\t- instruction: either \"allocate\", \"store\", or \"load\"\n");
+	    		printf("\t- virtual address: int in range [0, 63]\n");
+	    		printf("\t- value: int in range [0, 255]\n");
+	    	}
+	    }
+	    correct_input = 0;
+	}
     // fclose(file_path);
     return 0;
 }
@@ -167,7 +170,7 @@ int isString(char* mystery) {
 
 int allocate(int pid, char* instruction, addr v_address, uint8_t val) {
 	//first we need an empty page frame
-	if(val!=1||val!=0){
+	if(val!= 1||val!=0){
 		err_handler(INVALID_VAL, pid);
 		return -1;
 	}
