@@ -134,16 +134,28 @@ int allocate(int pid, char* instruction, addr v_address, uint8_t val) {
 	if(page_table_addr==0x80){//process doesn't have a page table, so make one
 		proc_reg[pid] = PFN;
 		page_table_addr = proc_reg[pid];
+		printf("Put page table for PID %d into physical frame %u\n", pid, (uint8_t)PFN);
+		PFN = find_free();
+		if(PFN>0x3f){
+			err_handler(PFN, pid);
+			return -1;
+		}
 	}
 	addr VPN = v_address&0x30;
 	addr PTE_offset = VPN>>4;
 	addr PTE_addr = page_table_addr + PTE_offset;
 	//now that we have the address to the page table, look at the entry corresponding to the virtual address and check if there's already an entry
 	addr PTE = mem[PTE_addr];
-	if(PTE==0x80)mem[PTE_addr] = PFN+val;//this is a new entry
-	else if(PTE&0x01==!val){//check the protection bit to see if its different from val
-		addr tmp_PFN = mem[PET_addr];
+	addr tmp_PFN = PTE&0x30;
+	if(PTE==0x80){//this is a new entry
+		mem[PTE_addr] = PFN+val;
+		printf("Mapped virtual address %u (page %d) into physical frame %d\n", v_address, PTE_offset, PFN>>4);
 	}
+	else if(PTE&0x01==!val){//check the protection bit to see if its different from value
+		mem[PTE_addr] = tmp_PFN+val;
+		printf("Toggled protection bit to %d\n", val);
+	}
+	else err_handler(PAGE_OVERLAP,tmp_PFN>>4);//PFN already exists
 
 	printf("allocate\n");
 }
@@ -157,11 +169,11 @@ int store(int pid, char* instruction, addr v_address, uint8_t val) {
 		return -1; 
 	}
 	mem[phys_address] = (addr)val;
-	printf("Stored value %d at virtual address %d (physical address %d)\n", val, (uint8_t)v_address, (uint8_t)phys_address);
+	printf("Stored value %u at virtual address %u (physical address %u)\n", val, (uint8_t)v_address, (uint8_t)phys_address);
 	return phys_address;
 }
 
-//returns the value stored in memory at the virtual address
+//returns the value stored in memory at the virtual uaddress
 //returns -1 if failed
 int load(int pid, char* instruction, addr v_address) {
 	addr phys_address = VPN_TO_MEM(pid, v_address);
@@ -170,7 +182,7 @@ int load(int pid, char* instruction, addr v_address) {
 		return -1;
 	}
 	uint8_t val = (int)mem[phys_address]; 
-	printf("The value %d is at virtual address %d (physical address %d)\n", val, (uint8_t)v_address, (uint8_t)phys_address);
+	printf("The value %u is at virtual address %u (physical address %u)\n", val, (uint8_t)v_address, (uint8_t)phys_address);
 	return val;
 }
 
@@ -205,6 +217,6 @@ void err_handler(addr err, int err_val){
 		case INVALID_VAL:
 			printf("ERROR: invalid value passed to allocation of process %d\n", err_val);
 		default: 
-			printf("ERROR: unknown error, tried to access physical memory address %d, which is larger than memory\n", err);
+			printf("ERROR: unknown error, tried to access physical memory address %u, which is larger than memory\n", err);
 	}
 }

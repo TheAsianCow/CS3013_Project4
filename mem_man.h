@@ -23,6 +23,7 @@ int isValidArgs(char** args);
 int allocate(int pid, char* instruction, addr v_address, uint8_t val);
 int store(int pid, char* instruction, addr v_address, uint8_t val);
 int load(int pid, char* instruction, addr v_address);
+addr find_free();
 addr VPN_TO_MEM(int pid, addr address);
 void err_handler(addr err, int err_val);
 
