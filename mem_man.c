@@ -1,23 +1,26 @@
-#include <stdlib.h>
-#include <stdio.h>
-#include <unistd.h>
-#include <string.h>
 #include "mem_man.h"
 
 addr mem[64];
 int free_list[4];//indices correspond to the pages, value stored at the index corresponds to the pid that's using the frame
 				 //-1 means that the page is free 
 addr proc_reg[4];//stores the physical address that points to the page table for the corresponding PID
+				 //-1 means that the process doesn't have a page table
 
 int main(int argc, char* argv[]){
 	// char* pid_str;
 	int pid;
 	char* instruction;
 	// char* v_ad_str;
-	unsigned char v_address;
+	addr v_address;
 	// char* value_str;
-	int value;
+	uint8_t value;
 	// int correct_input = 0;
+	int i;
+	for(i = 0; i < 4; i++){
+		free_list[i] = -1;
+		proc_reg[i] = 0x80;
+	}
+	for(i = 0; i < 64; i++) mem[i] = 0x80;
 
 	char* file_path = "instructions.txt";
 	char array[50];
@@ -97,8 +100,8 @@ void parse(char* line, char** args){
 int isValidArgs(char** args) {
 	int pid = atoi(args[0]);
 	char* instruction = args[1];
-	unsigned char v_address = (int) args[2];
-	int value = atoi(args[3]);
+	addr v_address = (int) args[2];
+	uint8_t value = atoi(args[3]);
 	// printf("isValidArgs\n");
 	// printf("%d\t%s\t%d\t%d\n", pid, instruction, v_address, value);
 	// printf(pid >= 0 && pid <= 3);
@@ -115,25 +118,46 @@ int isValidArgs(char** args) {
 	return 0;
 }
 
-int allocate(int pid, char* instruction, addr v_address, int val) {
+int allocate(int pid, char* instruction, addr v_address, uint8_t val) {
 	//first we need an empty page frame
-	int i;
-	for(i = 0; i < 4; i++){
-
+	if(val!=1||val!=0){
+		err_handler(INVALID_VAL, pid);
+		return -1;
 	}
+	addr PFN = find_free();
+	if(PFN>0x3f){
+		err_handler(PFN, pid);
+		return -1;
+	}
+	//now that we have a page that's free, we need to check if the process already has a page table
+	addr page_table_addr = proc_reg[pid];
+	if(page_table_addr==0x80){//process doesn't have a page table, so make one
+		proc_reg[pid] = PFN;
+		page_table_addr = proc_reg[pid];
+	}
+	addr VPN = v_address&0x30;
+	addr PTE_offset = VPN>>4;
+	addr PTE_addr = page_table_addr + PTE_offset;
+	//now that we have the address to the page table, look at the entry corresponding to the virtual address and check if there's already an entry
+	addr PTE = mem[PTE_addr];
+	if(PTE==0x80)mem[PTE_addr] = PFN+val;//this is a new entry
+	else if(PTE&0x01==!val){//check the protection bit to see if its different from val
+		addr tmp_PFN = mem[PET_addr];
+	}
+
 	printf("allocate\n");
 }
 
 //returns the physical address at which the value is stored at
 //returns -1 if failed
-int store(int pid, char* instruction, addr v_address, int val) {
+int store(int pid, char* instruction, addr v_address, uint8_t val) {
 	addr phys_address = VPN_TO_MEM(pid, v_address);
-	if(phys_address>0x30){
+	if(phys_address>0x3f){
 		err_handler(phys_address, 0);
 		return -1; 
 	}
-	mem[phys_address] = val;
-	printf("Stored value %d at virtual address %d (physical address %d)\n", val, (unsigned int)v_address, (unsigned int)phys_address);
+	mem[phys_address] = (addr)val;
+	printf("Stored value %d at virtual address %d (physical address %d)\n", val, (uint8_t)v_address, (uint8_t)phys_address);
 	return phys_address;
 }
 
@@ -141,21 +165,29 @@ int store(int pid, char* instruction, addr v_address, int val) {
 //returns -1 if failed
 int load(int pid, char* instruction, addr v_address) {
 	addr phys_address = VPN_TO_MEM(pid, v_address);
-	if(phys_address>0x30){
+	if(phys_address>0x3f){
 		err_handler(phys_address, 0);
 		return -1;
 	}
-	int val = mem[phys_address]; 
-	printf("The value %d is at virtual address %d (physical address %d)\n", val, (unsigned int)v_address, (unsigned int)phys_address);
+	uint8_t val = (int)mem[phys_address]; 
+	printf("The value %d is at virtual address %d (physical address %d)\n", val, (uint8_t)v_address, (uint8_t)phys_address);
 	return val;
+}
+
+addr find_free(){
+	int frame_num;
+	addr PFN = MEM_FULL;//if we loop through the full list of free pages and can't find anything then memory is full, will be changed with swapping
+	for(frame_num = 0; frame_num < 4; frame_num++) if(free_list[frame_num]==-1) return PFN = frame_num<<4;
+	return PFN; 
 }
 
 //outputs the physical mem address of a given virtual address
 addr VPN_TO_MEM(int pid, addr address){
 	addr VPN  = address&0x30;//gets the VPN from the bits 4 and 5 from the virtual address
 	addr offset = address&0x0f;//get the offset which are the 4 lower bits
-	addr PTE = mem[proc_reg[pid]+VPN];//get the first PTE from the address of the page table stored in the proc reg
-	if(!PTE) return OUT_OF_BOUNDS;//error code since the virtual address doesn't have a PTE which means it is out of bounds 
+	addr PTE_offset = VPN>>4;
+	addr PTE = mem[proc_reg[pid]+PTE_offset];//get the first PTE from the address of the page table stored in the proc reg
+	if(PTE!=0x80) return OUT_OF_BOUNDS;//error code since the virtual address doesn't have a PTE which means it is out of bounds 
 	addr PFN = PTE&0x30;//the physical frame numbers are located at bits 4 and 5
 	return PFN+offset;//adds the PFN back to the offset to get the address in the frame that has the data
 }
@@ -166,7 +198,13 @@ void err_handler(addr err, int err_val){
 			printf("ERROR: virtual address outside of page boundaries\n");
 		case PAGE_OVERLAP:
 			printf("ERROR: virtual page already mapped into physical frame %d\n", err_val);
+		case PAGE_LIMIT:
+			printf("ERROR: process %d has hit the max amount of pages it can have\n", err_val);
+		case MEM_FULL:
+			printf("ERROR: memory is full, unable to allocate more pages\n");
+		case INVALID_VAL:
+			printf("ERROR: invalid value passed to allocation of process %d\n", err_val);
 		default: 
-			printf("ERROR: unknown error, tried to access physical memory address %d, which is larger than memory\n", (unsigned int)err);
+			printf("ERROR: unknown error, tried to access physical memory address %d, which is larger than memory\n", err);
 	}
 }
