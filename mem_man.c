@@ -20,6 +20,7 @@ int main(int argc, char* argv[]){
 	addr v_address;
 	// char* value_str;
 	uint8_t value;
+	int num_args;
 	// int correct_input = 0;
 	int i;
 	for(i = 0; i < 4; i++){
@@ -53,10 +54,10 @@ int main(int argc, char* argv[]){
     	printf("Instructions? ");
     	// scanf("%d %s %c %d\n", &pid, instruction, &v_address, &value);
     	fgets (line, 50, stdin);
-    	parse(line, args);
-    	printf("line: %s\n", line);
+    	num_args = parse(line, args);
+    	// printf("line: %s\n", line);
     	// printf("%d\t%s\t%d\t%d\n", pid, instruction, v_address, value);
-    	if (isValidArgs(args)) {
+    	if (isValidArgs(args, num_args)) {
     		pid = atoi(args[0]);
     		instruction = args[1];
     		// printf("args 2 = %s\n", args[2]);
@@ -68,43 +69,12 @@ int main(int argc, char* argv[]){
 			correct_input = 1;
     	}
     	else {
-    		printf("Your arguments were incorrect.\nThe correct format is: (process id, instruction, virtual address, value)\n");
+    		printf("Your arguments were incorrect.\nThe correct format is: (process id,instruction,virtual address,value)\n");
     		printf("\t- process id: int in range [0, 3]\n");
     		printf("\t- instruction: either \"allocate\", \"store\", or \"load\"\n");
     		printf("\t- virtual address: int in range [0, 63]\n");
     		printf("\t- value: int in range [0, 255]\n");
     	}
-    	// printf("line = %s\n", line);
-        // if(line[size-1]=='\n') line[size-1]='\0';
-        // printf("while\n");
-        // size = getline(&line, &n, file);
-        // execute(line);
-        // size = getline(&line,&n,file);
-        
-    //     if (fgets(line, 50, file) != NULL){
-	   //      printf("line = %s\n", line);
-	   //      // split line into words and clean commas
-	   //      parse(line, args);
-	   //      // printf("%s\t%s\t%s\t%s\n", args[0], args[1], args[2], args[3]);
-	   //      // check if words are valid
-	   //      if (isValidArgs(args)) {
-	   //      	pid = atoi(args[0]);
-	   //      	instruction = args[1];
-	   //      	strcpy((char*) args[2], instruction);
-	   //      	value = atoi(args[3]);
-
-	   //      	printf("pid = %d\n", pid);
-	   //      	printf("instruction = %s\n", instruction);
-	   //      	printf("v_address = %d\n", v_address);
-	   //      	printf("value = %d\n", value);
-
-	   //      	if (strcmp(instruction, "allocate") == 0) allocate(pid, instruction, v_address, value);
-				// if (strcmp(instruction, "store") == 0) store(pid, instruction, v_address, value);
-				// if (strcmp(instruction, "load") == 0) load(pid, instruction, v_address);
-	   //      }
-	   //  }
-	   //  else
-	   //  	eof = 1;
     }
     // fclose(file_path);
     return 0;
@@ -112,47 +82,87 @@ int main(int argc, char* argv[]){
 
 /*
  * Parses the given line and splits it into separate strings
- * whenever it sees a space.
+ * whenever it sees a comma followed by a space.
  * @param line, the given line
  * @param args, where it stores the split strings
  */
-void parse(char* line, char** args){
-	printf("parse\n");
-	const char s[3] = ", ";
+int parse(char* line, char** args){
+	// printf("parse\n");
+	const char s[3] = ",";
+	// const char n[2] = "\n";
 	char* token = strtok(line, s);
 	int argc = 0;
 	while(token!=NULL){
-	args[argc] = strdup(token);
-	argc++;
-	token = strtok(NULL, s);
+		// printf("argc %d\ttoken = %s\n", argc, token);
+		if (argc == 3) token[strlen(token) - 1] = '\0';
+		args[argc] = strdup(token);
+		argc++;
+		token = strtok(NULL, s);
 	}
 	args[argc] = NULL;
+	return argc;
 }
 
-int isValidArgs(char** args) {
-	int pid = atoi(args[0]);
-	char* instruction = args[1];
-	// unsigned char v_address = (unsigned char) atoi(args[2]);
-	// int value = atoi(args[3]);
-	addr v_address = (unsigned char) atoi(args[2]);
-	uint8_t value = atoi(args[3]);
-	printf("isValidArgs\n");
-	printf("pid = %d\tinstruction = %s\tv_address = %d\tvalue = %d\n", pid, instruction, v_address, value);
-	
-	// printf("isValidArgs\n");
-	// printf("%d\t%s\t%d\t%d\n", pid, instruction, v_address, value);
-	// printf(pid >= 0 && pid <= 3);
-	// printf(v_address >= 0 && v_address <= 63);
-	// printf()
+int isValidArgs(char** args, int num_args) {
+	int pid;
+	char* instruction;
+	addr v_address;
+	uint8_t value;
 
-	if (pid >= 0 && pid <= 3 && v_address >= 0 && v_address <= 63 && value >= 0 && value <= 255) {
-		// printf("true\n");
-		if (strcmp(instruction, "allocate") == 0) return 1;
-		if (strcmp(instruction, "store")) return 1;
-		if (strcmp(instruction, "load")) return 1;
+	// make sure there's 4 args
+	// printf("size = %d\n", num_args);
+	if (num_args != 4) {
+		// printf("not enough args\n");
+		return 0;
+	}
+	// printf("first %d\n", isNumber(args[0]));
+	// printf("second %d\n", isString(args[1]));
+	// printf("third %d\n", isNumber(args[2]));
+	// printf("fourth %d\n", isNumber(args[3]));
+	// make sure the correct ones are numbers/strings
+	if (isNumber(args[0]) && isString(args[1]) && isNumber(args[2]) && isNumber(args[3])) {
+		pid = atoi(args[0]);
+		instruction = args[1];
+		// unsigned char v_address = (unsigned char) atoi(args[2]);
+		// int value = atoi(args[3]);
+		v_address = (unsigned char) atoi(args[2]);
+		value = atoi(args[3]);
+		// printf("isValidArgs\n");
+		// printf("pid = %d\tinstruction = %s\tv_address = %d\tvalue = %d\n", pid, instruction, v_address, value);
+		
+		// printf("isValidArgs\n");
+		// printf("%d\t%s\t%d\t%d\n", pid, instruction, v_address, value);
+		// printf(pid >= 0 && pid <= 3);
+		// printf(v_address >= 0 && v_address <= 63);
+		// printf()
+
+		if (pid >= 0 && pid <= 3 && v_address >= 0 && v_address <= 63 && value >= 0 && value <= 255) {
+			// printf("true\n");
+			if (strcmp(instruction, "allocate") == 0) return 1;
+			if (strcmp(instruction, "store")) return 1;
+			if (strcmp(instruction, "load")) return 1;
+		}
 	}
 	// instruction = NULL;
 	return 0;
+}
+
+int isNumber(char* mystery) {
+	int length = strlen(mystery);
+	// printf("is number size = %d\n", length);
+	for (int i = 0; i < length; i++) {
+		if (isdigit(mystery[i]) == 0) return 0;
+	}
+	return 1;
+}
+
+int isString(char* mystery) {
+	int length = strlen(mystery);
+	// printf("is string size = %d\n", length);
+	for (int i = 0; i < length; i++) {
+		if (isalpha(mystery[i]) == 0) return 0;
+	}
+	return 1;
 }
 
 int allocate(int pid, char* instruction, addr v_address, uint8_t val) {
