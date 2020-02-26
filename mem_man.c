@@ -185,7 +185,7 @@ int allocate(int pid, char* instruction, addr v_address, uint8_t val) {
 	if(page_table_addr==0x80){//process doesn't have a page table, so make one
 		proc_reg[pid] = PFN;
 		page_table_addr = proc_reg[pid];
-		printf("Put page table for PID %d into physical frame %u\n", pid, (uint8_t)PFN);
+		printf("Put page table for PID %d into physical frame %u\n", pid, PFN>>4);
 		PFN = find_free(pid);
 		if(PFN>0x3f){
 			err_handler(PFN, pid);
