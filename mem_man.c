@@ -170,11 +170,12 @@ int isString(char* mystery) {
 
 int allocate(int pid, char* instruction, addr v_address, uint8_t val) {
 	//first we need an empty page frame
-	if(val!= 1||val!=0){
+	if(val!=1&&val!=0){
+		// printf("was given a value of %u\n", val);
 		err_handler(INVALID_VAL, pid);
 		return -1;
 	}
-	addr PFN = find_free();
+	addr PFN = find_free(pid);
 	if(PFN>0x3f){
 		err_handler(PFN, pid);
 		return -1;
@@ -185,7 +186,7 @@ int allocate(int pid, char* instruction, addr v_address, uint8_t val) {
 		proc_reg[pid] = PFN;
 		page_table_addr = proc_reg[pid];
 		printf("Put page table for PID %d into physical frame %u\n", pid, (uint8_t)PFN);
-		PFN = find_free();
+		PFN = find_free(pid);
 		if(PFN>0x3f){
 			err_handler(PFN, pid);
 			return -1;
@@ -236,20 +237,27 @@ int load(int pid, char* instruction, addr v_address) {
 	return val;
 }
 
-addr find_free(){
+addr find_free(int pid){
 	int frame_num;
 	addr PFN = MEM_FULL;//if we loop through the full list of free pages and can't find anything then memory is full, will be changed with swapping
-	for(frame_num = 0; frame_num < 4; frame_num++) if(free_list[frame_num]==-1) return PFN = frame_num<<4;
+	for(frame_num = 0; frame_num < 4; frame_num++){
+		// printf("free_list at frame %d has value %d\n", frame_num, free_list[frame_num]);
+		if(free_list[frame_num]==-1){
+			// printf("page frame %d is free\n", frame_num);
+			free_list[frame_num] = pid;
+			return PFN = frame_num<<4;
+		}
+	}
 	return PFN; 
 }
 
 //outputs the physical mem address of a given virtual address
 addr VPN_TO_MEM(int pid, addr address){
-	addr VPN  = address&0x30;//gets the VPN from the bits 4 and 5 from the virtual address
+	addr VPN = address&0x30;//gets the VPN from the bits 4 and 5 from the virtual address
 	addr offset = address&0x0f;//get the offset which are the 4 lower bits
 	addr PTE_offset = VPN>>4;
 	addr PTE = mem[proc_reg[pid]+PTE_offset];//get the first PTE from the address of the page table stored in the proc reg
-	if(PTE!=0x80) return OUT_OF_BOUNDS;//error code since the virtual address doesn't have a PTE which means it is out of bounds 
+	if(PTE==0x80) return OUT_OF_BOUNDS;//error code since the virtual address doesn't have a PTE which means it is out of bounds 
 	addr PFN = PTE&0x30;//the physical frame numbers are located at bits 4 and 5
 	return PFN+offset;//adds the PFN back to the offset to get the address in the frame that has the data
 }
