@@ -175,22 +175,18 @@ int allocate(int pid, char* instruction, addr v_address, uint8_t val) {
 		err_handler(INVALID_VAL, pid);
 		return -1;
 	}
-	addr PFN = find_free(pid);
-	if(PFN>0x3f){
-		err_handler(PFN, pid);
-		return -1;
-	}
+	addr PFN = 0x80;
 	//now that we have a page that's free, we need to check if the process already has a page table
 	addr page_table_addr = proc_reg[pid];
 	if(page_table_addr==0x80){//process doesn't have a page table, so make one
-		proc_reg[pid] = PFN;
-		page_table_addr = proc_reg[pid];
-		printf("Put page table for PID %d into physical frame %u\n", pid, PFN>>4);
 		PFN = find_free(pid);
 		if(PFN>0x3f){
 			err_handler(PFN, pid);
 			return -1;
 		}
+		proc_reg[pid] = PFN;
+		page_table_addr = proc_reg[pid];
+		printf("Put page table for PID %d into physical frame %u\n", pid, PFN>>4);
 	}
 	addr VPN = v_address&0x30;
 	addr PTE_offset = VPN>>4;
@@ -199,22 +195,25 @@ int allocate(int pid, char* instruction, addr v_address, uint8_t val) {
 	addr PTE = mem[PTE_addr];
 	addr tmp_PFN = PTE&0x30;
 	if(PTE==0x80){//this is a new entry
+		PFN = find_free(pid);
+		if(PFN>0x3f){
+			err_handler(PFN, pid);
+			return -1;
+		}
 		mem[PTE_addr] = PFN+val;
 		printf("Mapped virtual address %u (page %d) into physical frame %d\n", v_address, PTE_offset, PFN>>4);
 	}
-	else if(PTE&0x01==!val){//check the protection bit to see if its different from value
+	else if((PTE&0x01)!=(val&0x01)){//check the protection bit to see if its different from value
 		mem[PTE_addr] = tmp_PFN+val;
 		printf("Toggled protection bit to %d\n", val);
 	}
 	else err_handler(PAGE_OVERLAP,tmp_PFN>>4);//PFN already exists
-
-	printf("allocate\n");
 }
 
 //returns the physical address at which the value is stored at
 //returns -1 if failed
 int store(int pid, char* instruction, addr v_address, uint8_t val) {
-	addr phys_address = VPN_TO_MEM(pid, v_address);
+	addr phys_address = VPN_TO_MEM(pid, v_address, 0);
 	if(phys_address>0x3f){
 		err_handler(phys_address, 0);
 		return -1; 
@@ -227,7 +226,7 @@ int store(int pid, char* instruction, addr v_address, uint8_t val) {
 //returns the value stored in memory at the virtual uaddress
 //returns -1 if failed
 int load(int pid, char* instruction, addr v_address) {
-	addr phys_address = VPN_TO_MEM(pid, v_address);
+	addr phys_address = VPN_TO_MEM(pid, v_address, 1);
 	if(phys_address>0x3f){
 		err_handler(phys_address, 0);
 		return -1;
@@ -252,12 +251,13 @@ addr find_free(int pid){
 }
 
 //outputs the physical mem address of a given virtual address
-addr VPN_TO_MEM(int pid, addr address){
+addr VPN_TO_MEM(int pid, addr address, int op){
 	addr VPN = address&0x30;//gets the VPN from the bits 4 and 5 from the virtual address
 	addr offset = address&0x0f;//get the offset which are the 4 lower bits
 	addr PTE_offset = VPN>>4;
 	addr PTE = mem[proc_reg[pid]+PTE_offset];//get the first PTE from the address of the page table stored in the proc reg
 	if(PTE==0x80) return OUT_OF_BOUNDS;//error code since the virtual address doesn't have a PTE which means it is out of bounds 
+	if(!(PTE&0x01)&&(op==0)) return INVALID_WRITE;
 	addr PFN = PTE&0x30;//the physical frame numbers are located at bits 4 and 5
 	return PFN+offset;//adds the PFN back to the offset to get the address in the frame that has the data
 }
@@ -266,15 +266,24 @@ void err_handler(addr err, int err_val){
 	switch(err){
 		case OUT_OF_BOUNDS: 
 			printf("ERROR: virtual address outside of page boundaries\n");
+			break;
 		case PAGE_OVERLAP:
 			printf("ERROR: virtual page already mapped into physical frame %d\n", err_val);
+			break;
 		case PAGE_LIMIT:
 			printf("ERROR: process %d has hit the max amount of pages it can have\n", err_val);
+			break;
 		case MEM_FULL:
 			printf("ERROR: memory is full, unable to allocate more pages\n");
+			break;
 		case INVALID_VAL:
 			printf("ERROR: invalid value passed to allocation of process %d\n", err_val);
+			break;
+		case INVALID_WRITE:
+			printf("ERROR: illegal write to a read-only page\n");
+			break;
 		default: 
 			printf("ERROR: unknown error, tried to access physical memory address %u, which is larger than memory\n", err);
+			break;
 	}
 }

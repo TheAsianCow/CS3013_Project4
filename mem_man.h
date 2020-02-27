@@ -14,6 +14,7 @@
 #define PAGE_LIMIT 0x42
 #define MEM_FULL 0x43
 #define INVALID_VAL 0x44
+#define INVALID_WRITE 0x45
 //...
 
 typedef unsigned char addr;
@@ -27,7 +28,7 @@ int allocate(int pid, char* instruction, addr v_address, uint8_t val);
 int store(int pid, char* instruction, addr v_address, uint8_t val);
 int load(int pid, char* instruction, addr v_address);
 addr find_free(int pid);
-addr VPN_TO_MEM(int pid, addr address);
+addr VPN_TO_MEM(int pid, addr address, int op);
 void err_handler(addr err, int err_val);
 
 #endif
