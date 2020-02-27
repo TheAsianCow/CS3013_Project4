@@ -1,10 +1,11 @@
 #include "mem_man.h"
 
 addr mem[64];
-addr dsk[320];
 int free_list[4];//indices correspond to the pages in mem, value stored at the index corresponds to the pid that's using the frame
 				 //-1 means that the page is free 
 int dsk_free_list[20];//indices correspond to the pages in disk, value stored at the index corresponds to the pid that's using the frame
+addr dsk[320];//(1 page for page table+4 pages for data)*4 processes*16 bytes/page
+int free_list[4];//indices correspond to the pages, value stored at the index corresponds to the pid that's using the frame
 				 //-1 means that the page is free 
 addr proc_reg[4];//stores the physical address that points to the page table for the corresponding PID
 				 //-1 means that the process doesn't have a page table
@@ -78,7 +79,7 @@ int main(int argc, char* argv[]){
  */
 int exit_mem_man() {
 	char line[20];
-	printf("\nType \"stop\" to stop the program. Otherwise, hit the enter key. ");
+	printf("Type \"stop\" to stop the program. Otherwise, hit the enter key. ");
 	fgets (line, 20, stdin);
 	// printf("length = %d\n", strlen(line));
 	for (int i = 0; i < strlen(line); i++)
@@ -129,7 +130,7 @@ int isValidArgs(char** args, int num_args) {
 		// printf("not enough args\n");
 		return 0;
 	}
-	if (isNumber(args[0]) && isString(args[1]) && isNumber(args[2]) && isNumber(args[3])) {
+	if(isNumber(args[0]) && isString(args[1]) && isNumber(args[2]) && isNumber(args[3])) {
 		pid = atoi(args[0]);
 		instruction = args[1];
 		v_address = (unsigned char) atoi(args[2]);
@@ -222,7 +223,7 @@ int allocate(int pid, addr v_address, uint8_t val) {
 	}
 	else if((PTE&0x01)!=(val&0x01)){//check the protection bit to see if its different from value
 		mem[PTE_addr] = tmp_PFN+val;
-		printf("Toggled protection bit to %d\n", val);
+		printf("Updating permissions for virtual page %d (frame %d)\n",PTE_offset,tmp_PFN>>4);
 	}
 	else err_handler(PAGE_OVERLAP,tmp_PFN>>4);//PFN already exists
 
