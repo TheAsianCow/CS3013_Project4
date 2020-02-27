@@ -1,11 +1,14 @@
 #include "mem_man.h"
 
 addr mem[64];
-addr disk[320];
-int free_list[4];//indices correspond to the pages, value stored at the index corresponds to the pid that's using the frame
+addr dsk[320];
+int free_list[4];//indices correspond to the pages in mem, value stored at the index corresponds to the pid that's using the frame
+				 //-1 means that the page is free 
+int dsk_free_list[20];//indices correspond to the pages in disk, value stored at the index corresponds to the pid that's using the frame
 				 //-1 means that the page is free 
 addr proc_reg[4];//stores the physical address that points to the page table for the corresponding PID
 				 //-1 means that the process doesn't have a page table
+int to_evict; // page to evict - a counter for swap
 
 int main(int argc, char* argv[]){
 	int pid;
@@ -15,15 +18,19 @@ int main(int argc, char* argv[]){
 	uint8_t value;
 	int num_args;
 	int i;
+
+	char line[50];
+    char* args[50];
+
 	for(i = 0; i < 4; i++){
 		free_list[i] = -1;
 		proc_reg[i] = 0x80;
 	}
+	for (i = 0; i < 20; i++) dsk_free_list[i] = -1;
 	for(i = 0; i < 64; i++) mem[i] = 0x80;
 	for (i = 0; i < 320; i++) disk[i] = 0x80;
 
-	char line[50];
-    char* args[50];
+	to_evict = 0;
 
     // instructions
     printf("Welcome to Jerfy and Jyalu's virtual memory system!\n");
@@ -33,6 +40,7 @@ int main(int argc, char* argv[]){
     printf("\t(process_id,instruction,virtual_address,value)\n");
 	printf("\tArguments should be separated by a single comma i.e. \",\"\n\n");
 
+	// run the program
     while(1) {
 	    while(correct_input == 0){
 	    	printf("\nInstructions? ");
@@ -263,7 +271,6 @@ int load(int pid, addr v_address) {
 addr find_free(int pid){
 	int frame_num;
 	addr PFN = MEM_FULL;//if we loop through the full list of free pages and can't find anything then memory is full, will be changed with swapping
-	if (PFN == MEM_FULL) swap(pid);
 	for(frame_num = 0; frame_num < 4; frame_num++){
 		// printf("free_list at frame %d has value %d\n", frame_num, free_list[frame_num]);
 		if(free_list[frame_num]==-1){
@@ -272,26 +279,42 @@ addr find_free(int pid){
 			return PFN = frame_num<<4;
 		}
 	}
+	if (PFN == MEM_FULL) PFN = swap(pid);
 	return PFN; 
 }
 
 /*
  * Pages out a page of its own choosing to disk and returns the
- * physical address of the page frame in physical memory that it
- * just freed.
- * @param pid
+ * physical address of the page frame in physical memory that it just freed.
  */
 addr swap(int pid) {
-	// pick page to kick out - round robin
-		// keep updating counter for which page to evict - 0 1 2 3
-	// write the banished page to disk
-		// memcpy((disk_addr, mem_addr, size));
+	int mem_index;
+	int dsk_index;
+	addr new_PFN;
+
+	// pick page to kick out aka get the phys mem address of page x - round robin
+	mem_index = 16*page_to_evict;
+	page_to_evict++;
+	// get free page in disk
+	for (int i = 0; i < 20; i++) {
+		if (dsk_free_list[i] == -1) {
+			dsk_free_list[i] = pid;
+			dsk_index = i;
+			new_PFN = i << 4;
+			break;
+		}
+	
+	}
 	// update page table to record disk location for evicted page
+		// find page table
 		// update page table
 		// mark present
 		// update PFN of PTE
+	// write the banished page to disk
+	memcpy((dsk+dsk_index), (mem+index), 16);
+		
 	// return address of now empty page frame in phys mem
-	return 0;
+	return new_PFN;
 }
 
 /*
