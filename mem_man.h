@@ -20,14 +20,16 @@
 typedef unsigned char addr;
 
 int main(int argc, char* argv[]);
+int exit_mem_man();
 int parse(char* line, char** args);
 int isValidArgs(char** args, int num_args);
 int isNumber(char* mystery);
 int isString(char* mystery);
-int allocate(int pid, char* instruction, addr v_address, uint8_t val);
-int store(int pid, char* instruction, addr v_address, uint8_t val);
-int load(int pid, char* instruction, addr v_address);
+int allocate(int pid, addr v_address, uint8_t val);
+int store(int pid, addr v_address, uint8_t val);
+int load(int pid, addr v_address);
 addr find_free(int pid);
+addr swap(int pid);
 addr VPN_TO_MEM(int pid, addr address, int op);
 void err_handler(addr err, int err_val);
 
