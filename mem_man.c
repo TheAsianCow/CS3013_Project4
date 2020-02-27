@@ -7,21 +7,12 @@ addr proc_reg[4];//stores the physical address that points to the page table for
 				 //-1 means that the process doesn't have a page table
 
 int main(int argc, char* argv[]){
-	char pid_str[5];
 	int pid;
 	char* instruction;
-	char v_address_str[5];
-	// unsigned char v_address;
-	char value_str[5];
-	// int value;
 	int correct_input = 0;
-	// char* args[4];
-	// char* v_ad_str;
 	addr v_address;
-	// char* value_str;
 	uint8_t value;
 	int num_args;
-	// int correct_input = 0;
 	int i;
 	for(i = 0; i < 4; i++){
 		free_list[i] = -1;
@@ -29,39 +20,16 @@ int main(int argc, char* argv[]){
 	}
 	for(i = 0; i < 64; i++) mem[i] = 0x80;
 
-	// char* file_path = "instructions.txt";
 	char line[50];
-    // char* line = array;
     char* args[50];
- //    ssize_t size;
- //    size_t n = 0;
- //    int eof = 0;
-
-    // parsing
-	// FILE* file = fopen(file_path,"r");
-	// if(file == NULL) {
- //      perror("Error opening file");
- //      return(-1);
-	// }
-    // size = getline(&line,&n,file);
-    // printf("size = %d\n", size);
-    
-   // if( fgets (str, 60, fp)!=NULL ) {
-   //     writing content to stdout 
-   //    puts(str);
-   // }
     while(1) {
 	    while(correct_input == 0){
 	    	printf("Instructions? ");
-	    	// scanf("%d %s %c %d\n", &pid, instruction, &v_address, &value);
 	    	fgets (line, 50, stdin);
 	    	num_args = parse(line, args);
-	    	// printf("line: %s\n", line);
-	    	// printf("%d\t%s\t%d\t%d\n", pid, instruction, v_address, value);
 	    	if (isValidArgs(args, num_args)) {
 	    		pid = atoi(args[0]);
 	    		instruction = args[1];
-	    		// printf("args 2 = %s\n", args[2]);
 	    		v_address = (unsigned char) atoi(args[2]);
 	    		value = atoi(args[3]);
 	    		if (strcmp(instruction, "allocate") == 0) allocate(pid, instruction, v_address, value);
@@ -70,7 +38,8 @@ int main(int argc, char* argv[]){
 				correct_input = 1;
 	    	}
 	    	else {
-	    		printf("Your arguments were incorrect.\nThe correct format is: (process id,instruction,virtual address,value)\n");
+	    		printf("Your arguments were incorrect.\nThe correct format is: (process_id,instruction,virtual_address,value)\n");
+	    		printf("\t- Arguments should be separated by a single comma i.e. \",\"\n");
 	    		printf("\t- process id: int in range [0, 3]\n");
 	    		printf("\t- instruction: either \"allocate\", \"store\", or \"load\"\n");
 	    		printf("\t- virtual address: int in range [0, 63]\n");
@@ -79,7 +48,6 @@ int main(int argc, char* argv[]){
 	    }
 	    correct_input = 0;
 	}
-    // fclose(file_path);
     return 0;
 }
 
@@ -96,7 +64,6 @@ int parse(char* line, char** args){
 	char* token = strtok(line, s);
 	int argc = 0;
 	while(token!=NULL){
-		// printf("argc %d\ttoken = %s\n", argc, token);
 		if (argc == 3) token[strlen(token) - 1] = '\0';
 		args[argc] = strdup(token);
 		argc++;
@@ -168,8 +135,20 @@ int isString(char* mystery) {
 	return 1;
 }
 
+/*
+ * Tells the memory manager to allocate a physical page: it creates a mapping
+ * in the page table between a virtual and physical address. The manager must
+ * determine the appropriate virtual page number using the virtual address.
+ * @param pid, the process id to allocate
+ * @param instruction, the string "allocate"
+ * @param v_address, the virtual address to use
+ * @param val, either 0 or 1
+ * 		if 1: the page is readable and writeable
+ * 		if 0: readable only
+ * @return 0 on success, -1 otherwise
+ */
 int allocate(int pid, char* instruction, addr v_address, uint8_t val) {
-	//first we need an empty page frame
+	// first we need an empty page frame
 	if(val!=1&&val!=0){
 		// printf("was given a value of %u\n", val);
 		err_handler(INVALID_VAL, pid);
@@ -180,9 +159,9 @@ int allocate(int pid, char* instruction, addr v_address, uint8_t val) {
 		err_handler(PFN, pid);
 		return -1;
 	}
-	//now that we have a page that's free, we need to check if the process already has a page table
+	// now that we have a page that's free, we need to check if the process already has a page table
 	addr page_table_addr = proc_reg[pid];
-	if(page_table_addr==0x80){//process doesn't have a page table, so make one
+	if(page_table_addr==0x80){ //process doesn't have a page table, so make one
 		proc_reg[pid] = PFN;
 		page_table_addr = proc_reg[pid];
 		printf("Put page table for PID %d into physical frame %u\n", pid, PFN>>4);
@@ -208,7 +187,8 @@ int allocate(int pid, char* instruction, addr v_address, uint8_t val) {
 	}
 	else err_handler(PAGE_OVERLAP,tmp_PFN>>4);//PFN already exists
 
-	printf("allocate\n");
+	// printf("allocate\n");
+	return 0;
 }
 
 //returns the physical address at which the value is stored at
@@ -237,6 +217,9 @@ int load(int pid, char* instruction, addr v_address) {
 	return val;
 }
 
+/*
+ * Finds an empty page frame and returns it.
+ */
 addr find_free(int pid){
 	int frame_num;
 	addr PFN = MEM_FULL;//if we loop through the full list of free pages and can't find anything then memory is full, will be changed with swapping
