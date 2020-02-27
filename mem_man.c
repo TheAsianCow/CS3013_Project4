@@ -5,8 +5,6 @@ int free_list[4];//indices correspond to the pages in mem, value stored at the i
 				 //-1 means that the page is free 
 int dsk_free_list[20];//indices correspond to the pages in disk, value stored at the index corresponds to the pid that's using the frame
 addr dsk[320];//(1 page for page table+4 pages for data)*4 processes*16 bytes/page
-int free_list[4];//indices correspond to the pages, value stored at the index corresponds to the pid that's using the frame
-				 //-1 means that the page is free 
 addr proc_reg[4];//stores the physical address that points to the page table for the corresponding PID
 				 //-1 means that the process doesn't have a page table
 int to_evict; // page to evict - a counter for swap
@@ -288,10 +286,12 @@ addr find_free(int pid){
  * Pages out a page of its own choosing to disk and returns the
  * physical address of the page frame in physical memory that it just freed.
  */
-addr swap(int pid) {
+addr swap() {
+	int pid;
 	int mem_index;
 	int dsk_index;
 	addr new_PFN;
+	addr p_table;
 
 	// pick page to kick out aka get the phys mem address of page x - round robin
 	mem_index = 16*page_to_evict;
@@ -299,6 +299,7 @@ addr swap(int pid) {
 	// get free page in disk
 	for (int i = 0; i < 20; i++) {
 		if (dsk_free_list[i] == -1) {
+			pid = free_list[mem_index];
 			dsk_free_list[i] = pid;
 			dsk_index = i;
 			new_PFN = i << 4;
@@ -306,11 +307,16 @@ addr swap(int pid) {
 		}
 	
 	}
-	// update page table to record disk location for evicted page
-		// find page table
-		// update page table
-		// mark present
-		// update PFN of PTE
+	// find page table
+	p_table = proc_reg[pid];
+	// update page table
+
+	// mark not present
+
+	// update PFN of PTE
+
+	// delete from main mem
+
 	// write the banished page to disk
 	memcpy((dsk+dsk_index), (mem+index), 16);
 		
