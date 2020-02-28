@@ -26,6 +26,14 @@
 #define NO_PAGES 0x46
 //...
 
+//debug modes
+#define RUN 1 //this is just to give the program instructions for normal operation
+#define MEM_MAP 2
+#define MEM_DSK_MAP 3
+#define LIST_REG 4
+#define LIST_PTE 5
+#define FULL 6
+
 typedef unsigned char addr;
 
 int main(int argc, char* argv[]);
@@ -42,5 +50,6 @@ addr swap(int page_ID);
 addr evict(int add_page_ID);
 addr VPN_TO_MEM(int pid, addr address, int op);
 void err_handler(addr err, int err_val);
+void debugger(int mode);
 
 #endif
