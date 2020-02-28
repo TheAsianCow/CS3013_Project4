@@ -1,13 +1,13 @@
 #include "mem_man.h"
 
 addr mem[64];
-int free_list[4];//indices correspond to the pages in mem, value stored at the index corresponds to the pid that's using the frame
+int free_list[4];//indices correspond to the pages in mem, value stored at the index 
+				 //corresponds to the page of the PID that occupies that frame in memory
 				 //-1 means that the page is free 
-int dsk_free_list[20];//indices correspond to the pages in disk, value stored at the index corresponds to the pid that's using the frame
 addr dsk[320];//(1 page for page table+4 pages for data)*4 processes*16 bytes/page
 addr proc_reg[4];//stores the physical address that points to the page table for the corresponding PID
 				 //-1 means that the process doesn't have a page table
-int to_evict; // page to evict - a counter for swap
+int page_to_evict; // page to evict - a counter for swap
 
 int main(int argc, char* argv[]){
 	int pid;
@@ -25,11 +25,11 @@ int main(int argc, char* argv[]){
 		free_list[i] = -1;
 		proc_reg[i] = 0x80;
 	}
-	for (i = 0; i < 20; i++) dsk_free_list[i] = -1;
+	// for (i = 0; i < 20; i++) dsk_free_list[i] = -1;
 	for(i = 0; i < 64; i++) mem[i] = 0x80;
-	for (i = 0; i < 320; i++) disk[i] = 0x80;
+	for (i = 0; i < 320; i++) dsk[i] = 0x80;
 
-	to_evict = 0;
+	page_to_evict = 0;
 
     // instructions
     printf("Welcome to Jerfy and Jyalu's virtual memory system!\n");
@@ -192,10 +192,11 @@ int allocate(int pid, addr v_address, uint8_t val) {
 		return -1;
 	}
 	addr PFN = 0x80;
+	int page_id = pid*5;//pid*5 gets you the page_id for the pid's page table
 	//now that we have a page that's free, we need to check if the process already has a page table
 	addr page_table_addr = proc_reg[pid];
 	if(page_table_addr==0x80){//process doesn't have a page table, so make one
-		PFN = find_free(pid);
+		PFN = find_free(page_id);//find a free page for the pid's page table
 		if(PFN>0x3f){
 			err_handler(PFN, pid);
 			return -1;
@@ -203,6 +204,18 @@ int allocate(int pid, addr v_address, uint8_t val) {
 		proc_reg[pid] = PFN;
 		page_table_addr = proc_reg[pid];
 		printf("Put page table for PID %d into physical frame %u\n", pid, PFN>>4);
+	}else if(page_table_addr==0xff){//process has a page table in disk
+		PFN = swap(page_id);//find a free page for the pid's page table
+		if(PFN>0x3f){
+			err_handler(PFN, pid);
+			return -1;
+		}
+		proc_reg[pid] = PFN;
+		page_table_addr = proc_reg[pid];
+		printf("Put page table for PID %d into physical frame %u\n", pid, PFN>>4);
+	}else if(page_table_addr>0x3f){
+		err_handler(page_table_addr, pid);
+		return -1;
 	}
 	addr VPN = v_address&0x30;
 	addr PTE_offset = VPN>>4;
@@ -211,12 +224,13 @@ int allocate(int pid, addr v_address, uint8_t val) {
 	addr PTE = mem[PTE_addr];
 	addr tmp_PFN = PTE&0x30;
 	if(PTE==0x80){//this is a new entry
-		PFN = find_free(pid);
+		page_id = pid*5+PTE_offset;
+		PFN = find_free(page_id);
 		if(PFN>0x3f){
 			err_handler(PFN, pid);
 			return -1;
 		}
-		mem[PTE_addr] = PFN+val;
+		mem[PTE_addr] = PFN+VAL_BIT+val;
 		printf("Mapped virtual address %u (page %d) into physical frame %d\n", v_address, PTE_offset, PFN>>4);
 	}
 	else if((PTE&0x01)!=(val&0x01)){//check the protection bit to see if its different from value
@@ -241,9 +255,9 @@ int allocate(int pid, addr v_address, uint8_t val) {
  * 		-1 if failed
  */
 int store(int pid, addr v_address, uint8_t val) {
-	addr phys_address = VPN_TO_MEM(pid, v_address, 0);
+	addr phys_address = VPN_TO_MEM(pid, v_address, WRITE);
 	if(phys_address>0x3f){
-		err_handler(phys_address, 0);
+		err_handler(phys_address, pid);
 		return -1; 
 	}
 	mem[phys_address] = (addr)val;
@@ -254,9 +268,9 @@ int store(int pid, addr v_address, uint8_t val) {
 //returns the value stored in memory at the virtual uaddress
 //returns -1 if failed
 int load(int pid, addr v_address) {
-	addr phys_address = VPN_TO_MEM(pid, v_address, 1);
+	addr phys_address = VPN_TO_MEM(pid, v_address, READ);
 	if(phys_address>0x3f){
-		err_handler(phys_address, 0);
+		err_handler(phys_address, pid);
 		return -1;
 	}
 	uint8_t val = (int)mem[phys_address]; 
@@ -267,18 +281,18 @@ int load(int pid, addr v_address) {
 /*
  * Finds an empty page frame and returns it.
  */
-addr find_free(int pid){
+addr find_free(int page_id){
 	int frame_num;
 	addr PFN = MEM_FULL;//if we loop through the full list of free pages and can't find anything then memory is full, will be changed with swapping
 	for(frame_num = 0; frame_num < 4; frame_num++){
 		// printf("free_list at frame %d has value %d\n", frame_num, free_list[frame_num]);
 		if(free_list[frame_num]==-1){
 			// printf("page frame %d is free\n", frame_num);
-			free_list[frame_num] = pid;
+			free_list[frame_num] = page_id;
 			return PFN = frame_num<<4;
 		}
 	}
-	if (PFN == MEM_FULL) PFN = swap(pid);
+	if (PFN == MEM_FULL) PFN = swap(page_id);
 	return PFN; 
 }
 
@@ -286,8 +300,7 @@ addr find_free(int pid){
  * Pages out a page of its own choosing to disk and returns the
  * physical address of the page frame in physical memory that it just freed.
  */
-addr swap() {
-	int pid;
+addr swap(int page_id) {
 	int mem_index;
 	int dsk_index;
 	addr new_PFN;
@@ -298,17 +311,17 @@ addr swap() {
 	page_to_evict++;
 	// get free page in disk
 	for (int i = 0; i < 20; i++) {
-		if (dsk_free_list[i] == -1) {
-			pid = free_list[mem_index];
-			dsk_free_list[i] = pid;
+		// if (dsk_free_list[i] == -1) {
+			page_id = free_list[mem_index];
+			// dsk_free_list[i] = pid;
 			dsk_index = i;
 			new_PFN = i << 4;
 			break;
-		}
+		// }
 	
 	}
 	// find page table
-	p_table = proc_reg[pid];
+	p_table = proc_reg[page_id];
 	// update page table
 
 	// mark not present
@@ -318,7 +331,7 @@ addr swap() {
 	// delete from main mem
 
 	// write the banished page to disk
-	memcpy((dsk+dsk_index), (mem+index), 16);
+	// memcpy((dsk+dsk_index), (mem+index), 16);
 		
 	// return address of now empty page frame in phys mem
 	return new_PFN;
@@ -328,20 +341,29 @@ addr swap() {
  * Returns the physical mem address of a given virtual address.
  */
 addr VPN_TO_MEM(int pid, addr address, int op){
+	addr page_table_addr = proc_reg[pid];
+	int page_id = pid*5;
+	if(page_table_addr==0x80) return NO_PAGES;
+	else if(page_table_addr==0xff) page_table_addr = swap(page_id);
+	else if(page_table_addr>0x3f) return OUT_OF_BOUNDS;
 	addr VPN = address&0x30;//gets the VPN from the bits 4 and 5 from the virtual address
 	addr offset = address&0x0f;//get the offset which are the 4 lower bits
 	addr PTE_offset = VPN>>4;
-	addr PTE = mem[proc_reg[pid]+PTE_offset];//get the first PTE from the address of the page table stored in the proc reg
+	// printf("proc_reg for PID %d holds the address %u\n", pid, proc_reg[pid]);
+	// printf("pte address is %u\n", proc_reg[pid]+PTE_offset);
+	addr PTE = mem[page_table_addr+PTE_offset];//get the first PTE from the address of the page table stored in the proc reg
+	addr PFN = 0x80;
 	if(PTE==0x80) return OUT_OF_BOUNDS;//error code since the virtual address doesn't have a PTE which means it is out of bounds 
-	if(!(PTE&0x01)&&(op==0)) return INVALID_WRITE;
-	addr PFN = PTE&0x30;//the physical frame numbers are located at bits 4 and 5
+	if(!(PTE&PROTEC_BIT)&&(op==WRITE)) return INVALID_WRITE;
+	if(PTE&VAL_BIT) PFN = PTE&0x30;//the physical frame numbers are located at bits 4 and 5
+	else PFN = swap(page_id+VPN);//the physical frame is stored on disk, swap to get it back in mem
 	return PFN+offset;//adds the PFN back to the offset to get the address in the frame that has the data
 }
 
 void err_handler(addr err, int err_val){
 	switch(err){
 		case OUT_OF_BOUNDS: 
-			printf("ERROR: virtual address outside of page boundaries\n");
+			printf("ERROR: tried to access address outside of page boundaries\n");
 			break;
 		case PAGE_OVERLAP:
 			printf("ERROR: virtual page already mapped into physical frame %d\n", err_val);
@@ -357,6 +379,9 @@ void err_handler(addr err, int err_val){
 			break;
 		case INVALID_WRITE:
 			printf("ERROR: illegal write to a read-only page\n");
+			break;
+		case NO_PAGES:
+			printf("ERROR: process %d does not have any pages allocated to it, please allocate memory to it first\n",err_val);
 			break;
 		default: 
 			printf("ERROR: unknown error, tried to access physical memory address %u, which is larger than memory\n", err);
