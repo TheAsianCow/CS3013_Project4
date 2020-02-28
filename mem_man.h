@@ -38,7 +38,12 @@ int allocate(int pid, addr v_address, uint8_t val);
 int store(int pid, addr v_address, uint8_t val);
 int load(int pid, addr v_address);
 addr find_free(int pid);
+<<<<<<< HEAD
+addr swap(int page_ID);
+addr evict(int add_page_ID);
+=======
 addr swap(int page_id);
+>>>>>>> b76a17e9851e732baa79c386d8a341735a9c1160
 addr VPN_TO_MEM(int pid, addr address, int op);
 void err_handler(addr err, int err_val);
 

@@ -4,10 +4,10 @@ addr mem[64];
 int free_list[4];//indices correspond to the pages in mem, value stored at the index 
 				 //corresponds to the page of the PID that occupies that frame in memory
 				 //-1 means that the page is free 
+int rnd_rbn_cnt; // page to evict - a counter for swap
 addr dsk[320];//(1 page for page table+4 pages for data)*4 processes*16 bytes/page
 addr proc_reg[4];//stores the physical address that points to the page table for the corresponding PID
 				 //-1 means that the process doesn't have a page table
-int page_to_evict; // page to evict - a counter for swap
 
 int main(int argc, char* argv[]){
 	int pid;
@@ -29,7 +29,7 @@ int main(int argc, char* argv[]){
 	for(i = 0; i < 64; i++) mem[i] = 0x80;
 	for (i = 0; i < 320; i++) dsk[i] = 0x80;
 
-	page_to_evict = 0;
+	rnd_rbn_cnt = 0;
 
     // instructions
     printf("Welcome to Jerfy and Jyalu's virtual memory system!\n");
@@ -301,41 +301,123 @@ addr find_free(int page_id){
  * Pages out a page of its own choosing to disk and returns the
  * physical address of the page frame in physical memory that it just freed.
  */
-addr swap(int page_id) {
-	int mem_index;
-	int dsk_index;
-	addr new_PFN;
-	addr p_table;
+addr swap(int page_ID) {
+	int free_spot = 0;
+	int frame_index;
+	int pid = page_ID / 5;
+	addr free_PFN;
 
-	// pick page to kick out aka get the phys mem address of page x - round robin
-	mem_index = 16*page_to_evict;
-	page_to_evict++;
-	// get free page in disk
-	for (int i = 0; i < 20; i++) {
-		// if (dsk_free_list[i] == -1) {
-			page_id = free_list[mem_index];
-			// dsk_free_list[i] = pid;
-			dsk_index = i;
-			new_PFN = i << 4;
-			break;
-		// }
-	
+// is there a spot in free list that = -1?
+	for (int i = 0; i < 4; i++) {
+		if (free_list[i] == -1) {
+			free_spot = 1;
+			frame_index = i;
+		}
 	}
-	// find page table
-	p_table = proc_reg[page_id];
-	// update page table
 
-	// mark not present
+	if (free_spot) {
+		dsk[page_ID] = 0x80; //overwrite disk w/ -1
+		free_list[pid] = page_ID; //update free_list to PID
+		free_PFN = frame_index << 4; //get the PFN
+	}
+	else {
+		free_PFN = evict(page_ID);
+		frame_index = free_PFN >> 4;
+	}
 
-	// update PFN of PTE
+// 	copy page to mem
+	memcpy(mem + (16 * frame_index), dsk + (16 * page_ID), 16);
 
-	// delete from main mem
+	// return PFN of now empty page frame in phys mem
+	return free_PFN;
+}
 
-	// write the banished page to disk
-	// memcpy((dsk+dsk_index), (mem+index), 16);
-		
-	// return address of now empty page frame in phys mem
-	return new_PFN;
+// returns the PFN of the page it evicted in memory
+addr evict(int add_page_ID) {
+	int evict_page_ID;
+	int page_table_ID;
+	int evict_pid;
+	int offset;
+	int pt_frame_idx = -1;
+	int page_table_addr;
+	addr PTE_addr;
+	addr evict_PFN;
+	addr PTE;
+	addr PFN;
+
+	// get page ID of RR: free_list[RR]
+	evict_page_ID = free_list[rnd_rbn_cnt];
+
+	// is it its own page table?
+	if (evict_page_ID % 5 == 0 && (evict_page_ID / 5 == add_page_ID / 5)) {
+		rnd_rbn_cnt = (rnd_rbn_cnt + 1) % 4;
+		evict_page_ID = free_list[rnd_rbn_cnt];
+	}
+
+	// 	if this is another process' page table
+	if (evict_page_ID % 5 == 0) {
+		evict_pid = evict_page_ID / 5;
+		proc_reg[evict_pid] = 0xff; //update reg for PID to 0xff
+		// copy page table to disk
+		memcpy(dsk + (16 * evict_page_ID), mem + (16 * rnd_rbn_cnt), 16);
+	}
+
+	// if this is a page
+	else {
+		// check if the page table is in memory
+		page_table_ID = (evict_page_ID / 5) * 5;
+		offset = evict_page_ID % 5;
+		for (int i = 0; i < 4; i++) {
+			if (free_list[i] == page_table_ID) {
+				pt_frame_idx = i;
+				page_table_addr = proc_reg[pt_frame_idx];
+			}
+		}
+// 		if the page table corresponding to the page is in mem
+		if (pt_frame_idx != -1) {
+// 			get PTE (PT + PID % 5)
+			PTE_addr = page_table_addr + offset;
+			PTE = mem[PTE_addr];
+// 			update PTE's valid bit
+			PTE = PTE & 0xfd;
+			mem[PTE_addr] = PTE;
+// 			copy the banished page to disk
+			memcpy(dsk + (16 * evict_page_ID), mem + (16 * rnd_rbn_cnt), 16);
+
+		}
+
+// 		the page table corresponding to the page is in disk
+		else {
+// 			get PID of banished
+// 			copy page into disk
+			memcpy(dsk + (16 * evict_page_ID), mem + (16 * rnd_rbn_cnt), 16);
+// 			copy page table to mem
+			memcpy(mem + (16 * rnd_rbn_cnt), dsk + (page_table_ID * 16), 16);
+			page_table_addr = //????????????????????????
+// 			get PTE (PT + PID % 5)
+			PTE_addr = page_table_addr + offset;
+			PTE = mem[PTE_addr];
+// 			update PTE's valid bit
+			PTE = PTE & 0xfd;
+			mem[PTE_addr] = PTE;
+// 			copy page table back to disk
+			memcpy(dsk + (page_table_ID * 16), mem + (16 * rnd_rbn_cnt), 16);
+		}
+
+	}		
+			
+
+
+	// 	overwrite mem w/ -1 ??????????????????????????????????
+	mem[rnd_rbn_cnt] = 0x80;
+	// 	update free_list to -1
+	free_list[rnd_rbn_cnt] = -1;
+	// get the PFN
+	PFN = rnd_rbn_cnt << 4;
+	// increment RR
+	rnd_rbn_cnt = (rnd_rbn_cnt + 1) % 4;
+
+	return PFN;
 }
 
 /*
