@@ -205,6 +205,7 @@ int allocate(int pid, addr v_address, uint8_t val) {
 		page_table_addr = proc_reg[pid];
 		printf("Put page table for PID %d into physical frame %u\n", pid, PFN>>4);
 	}else if(page_table_addr==0xff){//process has a page table in disk
+		printf("swapping in allocate\n");
 		PFN = swap(page_id);//find a free page for the pid's page table
 		if(PFN>0x3f){
 			err_handler(PFN, pid);
@@ -219,12 +220,15 @@ int allocate(int pid, addr v_address, uint8_t val) {
 	}
 	addr VPN = v_address&0x30;
 	addr PTE_offset = VPN>>4;
+	printf("v_address = %u\n", v_address);
+	printf("VPN = %u\n", VPN);
+	printf("PTE offset = %u\n", PTE_offset);
 	addr PTE_addr = page_table_addr + PTE_offset;
 	//now that we have the address to the page table, look at the entry corresponding to the virtual address and check if there's already an entry
 	addr PTE = mem[PTE_addr];
 	addr tmp_PFN = PTE&0x30;
 	if(PTE==0x80){//this is a new entry
-		page_id = pid*5+PTE_offset;
+		page_id = pid*5+PTE_offset+1;
 		PFN = find_free(page_id);
 		if(PFN>0x3f){
 			err_handler(PFN, pid);
@@ -234,12 +238,13 @@ int allocate(int pid, addr v_address, uint8_t val) {
 		printf("Mapped virtual address %u (page %d) into physical frame %d\n", v_address, PTE_offset, PFN>>4);
 	}
 	else if((PTE&0x01)!=(val&0x01)){//check the protection bit to see if its different from value
-		mem[PTE_addr] = tmp_PFN+val;
+		mem[PTE_addr] = tmp_PFN+VAL_BIT+val;
 		printf("Updating permissions for virtual page %d (frame %d)\n",PTE_offset,tmp_PFN>>4);
 	}
 	else err_handler(PAGE_OVERLAP,tmp_PFN>>4);//PFN already exists
 
-	// printf("allocate\n");
+	printf("finished allocate\n");
+	printf("free_list: %d, %d, %d, %d\n", free_list[0], free_list[1], free_list[2], free_list[3]);
 	return 0;
 }
 
@@ -292,7 +297,11 @@ addr find_free(int page_id){
 			return PFN = frame_num<<4;
 		}
 	}
-	if (PFN == MEM_FULL) PFN = swap(page_id);
+	if (PFN == MEM_FULL) {
+		printf("swapping in find free\n");
+		PFN = swap(page_id);
+	}
+	// printf("PFN returned by find free = %u\n", PFN);
 	return PFN; 
 }
 
@@ -306,6 +315,9 @@ addr swap(int page_ID) {
 	int pid = page_ID / 5;
 	addr free_PFN;
 
+	printf("Attempting to swap.\n");
+	printf("free_list: %d, %d, %d, %d\n", free_list[0], free_list[1], free_list[2], free_list[3]);
+
 // is there a spot in free list that = -1?
 	for (int i = 0; i < 4; i++) {
 		if (free_list[i] == -1) {
@@ -315,11 +327,13 @@ addr swap(int page_ID) {
 	}
 
 	if (free_spot) {
+		printf("found free spot. no actual swap\n");
 		dsk[page_ID] = 0x80; //overwrite disk w/ -1
 		free_list[pid] = page_ID; //update free_list to PID
 		free_PFN = frame_index << 4; //get the PFN
 	}
 	else {
+		printf("attempting to evict\n");
 		free_PFN = evict(page_ID);
 		frame_index = free_PFN >> 4;
 	}
@@ -327,6 +341,7 @@ addr swap(int page_ID) {
 // 	copy page to mem
 	memcpy(mem + (16 * frame_index), dsk + (16 * page_ID), 16);
 
+	printf("frame index swapped out = %d\n", free_PFN >> 4);
 	// return PFN of now empty page frame in phys mem
 	return free_PFN;
 }
@@ -337,25 +352,35 @@ addr evict(int add_page_ID) {
 	int page_table_ID;
 	int evict_pid;
 	int offset;
+	int evict_frame_idx;
 	int pt_frame_idx = -1;
 	int page_table_addr;
 	addr PTE_addr;
-	addr evict_PFN;
 	addr PTE;
 	addr PFN;
 
 	// get page ID of RR: free_list[RR]
 	evict_page_ID = free_list[rnd_rbn_cnt];
+	evict_pid = evict_page_ID / 5;
+
+	printf("attempting to evict\n");
+	printf("round robin count: %d\n", rnd_rbn_cnt);
+	printf("page ID of the page to evict: %d\n", evict_page_ID);
+
+	for (int i = 0; i < 4; i++) {
+		if (free_list[i] == evict_page_ID) evict_frame_idx = i;
+	}
 
 	// is it its own page table?
 	if (evict_page_ID % 5 == 0 && (evict_page_ID / 5 == add_page_ID / 5)) {
+		printf("is its own page table\n");
 		rnd_rbn_cnt = (rnd_rbn_cnt + 1) % 4;
 		evict_page_ID = free_list[rnd_rbn_cnt];
 	}
 
 	// 	if this is another process' page table
 	if (evict_page_ID % 5 == 0) {
-		evict_pid = evict_page_ID / 5;
+		printf("this is another process' page table\n");
 		proc_reg[evict_pid] = 0xff; //update reg for PID to 0xff
 		// copy page table to disk
 		memcpy(dsk + (16 * evict_page_ID), mem + (16 * rnd_rbn_cnt), 16);
@@ -363,18 +388,22 @@ addr evict(int add_page_ID) {
 
 	// if this is a page
 	else {
-		// check if the page table is in memory
+		printf("this is a page\n");
 		page_table_ID = (evict_page_ID / 5) * 5;
-		offset = evict_page_ID % 5;
+		offset = (evict_page_ID % 5) - 1;
+
+		// check if the page table is in memory
 		for (int i = 0; i < 4; i++) {
 			if (free_list[i] == page_table_ID) {
 				pt_frame_idx = i;
-				page_table_addr = proc_reg[pt_frame_idx];
 			}
 		}
+
 // 		if the page table corresponding to the page is in mem
 		if (pt_frame_idx != -1) {
+			printf("the corresponding page table is in memory\n");
 // 			get PTE (PT + PID % 5)
+			page_table_addr = proc_reg[evict_pid];
 			PTE_addr = page_table_addr + offset;
 			PTE = mem[PTE_addr];
 // 			update PTE's valid bit
@@ -387,35 +416,36 @@ addr evict(int add_page_ID) {
 
 // 		the page table corresponding to the page is in disk
 		else {
-// 			get PID of banished
+			printf("the corresponding page table is in disk\n");
 // 			copy page into disk
 			memcpy(dsk + (16 * evict_page_ID), mem + (16 * rnd_rbn_cnt), 16);
 // 			copy page table to mem
-			memcpy(mem + (16 * rnd_rbn_cnt), dsk + (page_table_ID * 16), 16);
-			page_table_addr = //????????????????????????
+			memcpy(mem + (16 * rnd_rbn_cnt), dsk + (evict_pid * 5 * 16), 16);
 // 			get PTE (PT + PID % 5)
+			page_table_addr = evict_frame_idx * 16;
 			PTE_addr = page_table_addr + offset;
 			PTE = mem[PTE_addr];
 // 			update PTE's valid bit
 			PTE = PTE & 0xfd;
 			mem[PTE_addr] = PTE;
 // 			copy page table back to disk
-			memcpy(dsk + (page_table_ID * 16), mem + (16 * rnd_rbn_cnt), 16);
+			memcpy(dsk + (evict_pid * 5 * 16), mem + (16 * rnd_rbn_cnt), 16);
 		}
 
 	}		
-			
 
-
-	// 	overwrite mem w/ -1 ??????????????????????????????????
-	mem[rnd_rbn_cnt] = 0x80;
-	// 	update free_list to -1
+	// overwrite mem w/ -1
+	for (int i = 0; i < 16; i++) {
+		mem[rnd_rbn_cnt*16 + i] = -1;
+	}
+	// update free_list to -1
 	free_list[rnd_rbn_cnt] = -1;
 	// get the PFN
 	PFN = rnd_rbn_cnt << 4;
 	// increment RR
 	rnd_rbn_cnt = (rnd_rbn_cnt + 1) % 4;
 
+	printf("frame num evicted = %d\n", PFN >> 4);
 	return PFN;
 }
 
@@ -426,7 +456,10 @@ addr VPN_TO_MEM(int pid, addr address, int op){
 	addr page_table_addr = proc_reg[pid];
 	int page_id = pid*5;
 	if(page_table_addr==0x80) return NO_PAGES;
-	else if(page_table_addr==0xff) page_table_addr = swap(page_id);
+	else if(page_table_addr==0xff) {
+		printf("swapping in VPN to MEM 1");
+		page_table_addr = swap(page_id);
+	}
 	else if(page_table_addr>0x3f) return OUT_OF_BOUNDS;
 	addr VPN = address&0x30;//gets the VPN from the bits 4 and 5 from the virtual address
 	addr offset = address&0x0f;//get the offset which are the 4 lower bits
@@ -438,7 +471,12 @@ addr VPN_TO_MEM(int pid, addr address, int op){
 	if(PTE==0x80) return OUT_OF_BOUNDS;//error code since the virtual address doesn't have a PTE which means it is out of bounds 
 	if(!(PTE&PROTEC_BIT)&&(op==WRITE)) return INVALID_WRITE;
 	if(PTE&VAL_BIT) PFN = PTE&0x30;//the physical frame numbers are located at bits 4 and 5
-	else PFN = swap(page_id+VPN);//the physical frame is stored on disk, swap to get it back in mem
+	else {
+		printf("swapping in VPN to MEM 2\n");
+		printf("PTE = %u\n", PTE);
+		printf("PTE&VAL_BIT = %u\n", PTE&VAL_BIT);
+		PFN = swap(page_id+VPN);//the physical frame is stored on disk, swap to get it back in mem
+	}
 	return PFN+offset;//adds the PFN back to the offset to get the address in the frame that has the data
 }
 
