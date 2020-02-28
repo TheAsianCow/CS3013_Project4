@@ -8,6 +8,14 @@
 #include <stdint.h>
 #include <ctype.h>
 
+//Page operations
+#define WRITE 0
+#define READ 1
+
+//Page table entry bit fields
+#define PROTEC_BIT 0x01 //protection bit stored in bit position 0, 1 = r/w mode, 0 = read only mode
+#define VAL_BIT 0x02 //valid bit stored in bit position 1, 1 = page is in memory, 0 = page is on disk
+
 //error codes
 #define OUT_OF_BOUNDS 0x40
 #define PAGE_OVERLAP 0x41
@@ -15,6 +23,7 @@
 #define MEM_FULL 0x43
 #define INVALID_VAL 0x44
 #define INVALID_WRITE 0x45
+#define NO_PAGES 0x46
 //...
 
 typedef unsigned char addr;
@@ -29,8 +38,12 @@ int allocate(int pid, addr v_address, uint8_t val);
 int store(int pid, addr v_address, uint8_t val);
 int load(int pid, addr v_address);
 addr find_free(int pid);
+<<<<<<< HEAD
 addr swap(int page_ID);
 addr evict(int add_page_ID);
+=======
+addr swap(int page_id);
+>>>>>>> b76a17e9851e732baa79c386d8a341735a9c1160
 addr VPN_TO_MEM(int pid, addr address, int op);
 void err_handler(addr err, int err_val);
 
