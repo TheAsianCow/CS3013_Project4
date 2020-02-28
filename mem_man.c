@@ -71,11 +71,11 @@ int main(int argc, char* argv[]){
 	    		printf("\tLIST_PTE: prints out the page table entries for each process\n");
 	    		printf("\tFULL: prints out all of the above information\n");
 
-	    		if (exit_mem_man() == 1) exit(1);
+	    		// if (exit_mem_man() == 1) exit(1);
 	    	}
 	    }
 	    correct_input = 0;
-	    if (exit_mem_man() == 1) exit(1);
+	    // if (exit_mem_man() == 1) exit(1);
 	}
     return 0;
 }
@@ -132,7 +132,7 @@ int isValidArgs(char** args, int num_args) {
 
 	// make sure there's 4 args
 	// printf("size = %d\n", num_args);
-	printf("you gave the arg %s\n", args[0]);
+	// printf("you gave the arg %s\n", args[0]);
 	if((num_args==1)&&(strncmp(args[0],"stop",4)==0)){
 		printf("Stopping program\n");
 		exit(1);
@@ -522,6 +522,18 @@ void debugger(int mode){
 			printf("Page table address locations (PID:ADDRESS): 0:%u, 1:%u, 2:%u, 3:%u\n", proc_reg[0], proc_reg[1], proc_reg[2], proc_reg[3]);
 			break;
 		case LIST_PTE:
+			printf("Reading page table entries in memory:\n");
+			int j = 0;
+			for(i = 0; i < 4; i++){
+				addr page_table_addr = proc_reg[i];
+				addr PTE = 0x80;
+				if(page_table_addr==0x80) printf("PID %d's page table does not exist\n", i);
+				else if(page_table_addr==0xff) printf("PID %d's page table is in disk\n",i);
+				else{
+					printf("PID %d's page table:\n", i);
+					for(j = 0; j < 4; j++) printf(BYTE_TO_BINARY_PATTERN"\n", BYTE_TO_BINARY(mem[page_table_addr+j]));
+				}
+			}
 			break;
 		default:
 			printf("Invalid or no debug mode given, printing out page IDs and page table locations\n");
