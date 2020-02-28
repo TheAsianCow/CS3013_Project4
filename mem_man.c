@@ -37,7 +37,7 @@ int main(int argc, char* argv[]){
     printf("It will continue doing so until you type in the string \"stop\".\n");
     printf("Each instruction you input must follow the format:\n");
     printf("\t(process_id,instruction,virtual_address,value)\n");
-	printf("\tArguments should be separated by a single comma i.e. \",\"\n\n");
+	printf("\tArguments should be separated by a single comma i.e. \",\"\n");
 
 	// run the program
     while(1) {
@@ -45,7 +45,8 @@ int main(int argc, char* argv[]){
 	    	printf("\nInstructions? ");
 	    	fgets (line, 50, stdin);
 	    	num_args = parse(line, args);
-	    	if (isValidArgs(args, num_args)) {
+	    	int mode = isValidArgs(args,num_args);
+	    	if (mode==RUN) {
 	    		pid = atoi(args[0]);
 	    		instruction = args[1];
 	    		v_address = (unsigned char) atoi(args[2]);
@@ -54,7 +55,7 @@ int main(int argc, char* argv[]){
 				if (strcmp(instruction, "store") == 0) store(pid, v_address, value);
 				if (strcmp(instruction, "load") == 0) load(pid, v_address);
 				correct_input = 1;
-	    	}
+	    	}else if(mode>1) debugger(mode);
 	    	else {
 	    		printf("Your arguments were incorrect.\nThe correct format is: (process_id,instruction,virtual_address,value)\n");
 	    		printf("\t- Arguments should be separated by a single comma i.e. \",\"\n");
@@ -62,6 +63,13 @@ int main(int argc, char* argv[]){
 	    		printf("\t- instruction: either \"allocate\", \"store\", or \"load\"\n");
 	    		printf("\t- virtual address: int in range [0, 63]\n");
 	    		printf("\t- value: int in range [0, 255]\n");
+	    		printf("To debug, type \"debug,<MODE>\"\n");
+	    		printf("MODES:\n");
+	    		printf("\tMEM_MAP: prints out the contents of the entire memory array\n");
+	    		printf("\tMEM_DSK_MAP: prints out the contents of the entire memory and disk array\n");
+	    		printf("\tLIST_REG: prints out the contents of free_list and proc_reg, which are the Page_IDs occupying the page frames in memory and the locations of the page table for each process respectively\n");
+	    		printf("\tLIST_PTE: prints out the page table entries for each process\n");
+	    		printf("\tFULL: prints out all of the above information\n");
 
 	    		if (exit_mem_man() == 1) exit(1);
 	    	}
@@ -124,6 +132,19 @@ int isValidArgs(char** args, int num_args) {
 
 	// make sure there's 4 args
 	// printf("size = %d\n", num_args);
+	printf("you gave the arg %s\n", args[0]);
+	if((num_args==1)&&(strncmp(args[0],"stop",4)==0)){
+		printf("Stopping program\n");
+		exit(1);
+	}
+	if((num_args==2)&&(strcmp(args[0],"debug")==0)){
+		if(strncmp(args[1],"FULL",4)==0) return FULL;
+		if(strncmp(args[1],"MEM_MAP",7)==0) return MEM_MAP;
+		if(strncmp(args[1],"MEM_DSK_MAP",11)==0) return MEM_DSK_MAP;
+		if(strncmp(args[1],"LIST_REG",8)==0) return LIST_REG;
+		if(strncmp(args[1],"LIST_PTE",8)==0) return LIST_PTE;
+		return LIST_REG;
+	}
 	if (num_args != 4) {
 		// printf("not enough args\n");
 		return 0;
@@ -505,6 +526,44 @@ void err_handler(addr err, int err_val){
 			break;
 		default: 
 			printf("ERROR: unknown error, tried to access physical memory address %u, which is larger than memory\n", err);
+			break;
+	}
+}
+
+void debugger(int mode){
+	int i = 0;
+	switch(mode){
+		case FULL:
+			for(i = MEM_MAP; i < FULL; i++) debugger(i);
+			break;
+		case MEM_MAP:
+			printf("Memory dump:\n");
+			for(i = 0; i < 64; i++){
+				if(i%16==0)printf("MEMORY PAGE FRAME %d\n",i/16);
+				printf("mem[%d]: %u\n", i, mem[i]);
+			}
+			break;
+		case MEM_DSK_MAP:
+			printf("Memory dump:\n");
+			for(i = 0; i < 64; i++){
+				if(i%16==0)printf("MEMORY PAGE FRAME %d\n",i/16);
+				printf("mem[%d]: %u\n", i, mem[i]);
+			}
+			printf("Disk dump:\n");
+			for(i = 0; i < 320; i++){
+				if(i%16==0)printf("DISK PAGE ID %d\n",i/16);
+				printf("dsk[%d]: %u\n", i, dsk[i]);
+			}
+			break;
+		case LIST_REG:
+			printf("Page IDs in memory (FRAME#:PAGE_ID): 0:%d, 1:%d, 2:%d, 3:%d\n", free_list[0],free_list[1],free_list[2],free_list[3]);
+			printf("Page table address locations (PID:ADDRESS): 0:%u, 1:%u, 2:%u, 3:%u\n", proc_reg[0], proc_reg[1], proc_reg[2], proc_reg[3]);
+			break;
+		case LIST_PTE:
+			break;
+		default:
+			printf("Invalid or no debug mode given, printing out page IDs and page table locations\n");
+			debugger(LIST_REG);
 			break;
 	}
 }
