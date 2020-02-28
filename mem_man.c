@@ -37,7 +37,7 @@ int main(int argc, char* argv[]){
     printf("It will continue doing so until you type in the string \"stop\".\n");
     printf("Each instruction you input must follow the format:\n");
     printf("\t(process_id,instruction,virtual_address,value)\n");
-	printf("\tArguments should be separated by a single comma i.e. \",\"\n\n");
+	printf("\tArguments should be separated by a single comma i.e. \",\"\n");
 
 	// run the program
     while(1) {
@@ -53,6 +53,7 @@ int main(int argc, char* argv[]){
 	    		if (strcmp(instruction, "allocate") == 0) allocate(pid, v_address, value);
 				if (strcmp(instruction, "store") == 0) store(pid, v_address, value);
 				if (strcmp(instruction, "load") == 0) load(pid, v_address);
+				if (strcmp(instruction,"stop") == 0){printf("Stopping program");exit(1);}
 				correct_input = 1;
 	    	}
 	    	else {
@@ -292,7 +293,7 @@ addr find_free(int page_id){
 			return PFN = frame_num<<4;
 		}
 	}
-	if (PFN == MEM_FULL) PFN = swap(page_id);
+	// if (PFN == MEM_FULL) PFN = evict(page_id);//if memory is full, evict a page and get the resulting address for a free page frame 
 	return PFN; 
 }
 
