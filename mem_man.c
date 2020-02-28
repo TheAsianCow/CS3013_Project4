@@ -534,7 +534,7 @@ void debugger(int mode){
 	int i = 0;
 	switch(mode){
 		case FULL:
-			for(i = MEM_MAP; i < FULL; i++) debugger(i);
+			for(i = MEM_DSK_MAP; i < FULL; i++) debugger(i);
 			break;
 		case MEM_MAP:
 			printf("Memory dump:\n");
