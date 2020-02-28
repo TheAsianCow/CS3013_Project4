@@ -8,6 +8,8 @@ int rnd_rbn_cnt; // page to evict - a counter for swap
 addr dsk[320];//(1 page for page table+4 pages for data)*4 processes*16 bytes/page
 addr proc_reg[4];//stores the physical address that points to the page table for the corresponding PID
 				 //-1 means that the process doesn't have a page table
+int not_alloc; // 1 means that the program can't swap since the page ID to add hasn't been allocated
+				// 0 means that swap was successful
 
 int main(int argc, char* argv[]){
 	int pid;
@@ -226,7 +228,7 @@ int allocate(int pid, addr v_address, uint8_t val) {
 		page_table_addr = proc_reg[pid];
 		printf("Put page table for PID %d into physical frame %u\n", pid, PFN>>4);
 	}else if(page_table_addr==0xff){//process has a page table in disk
-		// printf("swapping to get page table from\n");
+		printf("swapping to get page table from\n");
 		PFN = swap(page_id);//find a free page for the pid's page table
 		if(PFN>0x3f){
 			err_handler(PFN, pid);
@@ -245,6 +247,8 @@ int allocate(int pid, addr v_address, uint8_t val) {
 	// printf("VPN = %u\n", VPN);
 	// printf("PTE offset = %u\n", PTE_offset);
 	addr PTE_addr = page_table_addr + PTE_offset;
+
+
 	//now that we have the address to the page table, look at the entry corresponding to the virtual address and check if there's already an entry
 	addr PTE = mem[PTE_addr];
 	addr tmp_PFN = PTE&0x30;
@@ -265,7 +269,7 @@ int allocate(int pid, addr v_address, uint8_t val) {
 	else err_handler(PAGE_OVERLAP,tmp_PFN>>4);//PFN already exists
 
 	// printf("finished allocate\n");
-	// printf("free_list: %d, %d, %d, %d\n", free_list[0], free_list[1], free_list[2], free_list[3]);
+	printf("free_list: %d, %d, %d, %d\n", free_list[0], free_list[1], free_list[2], free_list[3]);
 	return 0;
 }
 
@@ -354,13 +358,14 @@ addr swap(int page_ID) {
 		free_PFN = frame_index << 4; //get the PFN
 	}
 	else {
-		// printf("attempting to evict\n");
+		printf("attempting to evict\n");
 		free_PFN = evict(page_ID);
 		frame_index = free_PFN >> 4;
 	}
 
 // 	copy page to mem
 	memcpy(mem + (16 * frame_index), dsk + (16 * page_ID), 16);
+	
 
 	// printf("frame index swapped out = %d\n", free_PFN >> 4);
 	// return PFN of now empty page frame in phys mem
@@ -384,9 +389,9 @@ addr evict(int add_page_ID) {
 	evict_page_ID = free_list[rnd_rbn_cnt];
 	evict_pid = evict_page_ID / 5;
 
-	// printf("attempting to evict\n");
-	// printf("round robin count: %d\n", rnd_rbn_cnt);
-	// printf("page ID of the page to evict: %d\n", evict_page_ID);
+	printf("attempting to evict\n");
+	printf("round robin count: %d\n", rnd_rbn_cnt);
+	printf("page ID of the page to evict: %d\n", evict_page_ID);
 
 	for (int i = 0; i < 4; i++) {
 		if (free_list[i] == evict_page_ID) evict_frame_idx = i;
@@ -394,14 +399,14 @@ addr evict(int add_page_ID) {
 
 	// is it its own page table?
 	if (evict_page_ID % 5 == 0 && (evict_page_ID / 5 == add_page_ID / 5)) {
-		// printf("is its own page table\n");
+		printf("is its own page table\n");
 		rnd_rbn_cnt = (rnd_rbn_cnt + 1) % 4;
 		evict_page_ID = free_list[rnd_rbn_cnt];
 	}
 
 	// 	if this is another process' page table
 	if (evict_page_ID % 5 == 0) {
-		// printf("this is another process' page table\n");
+		printf("this is another process' page table\n");
 		proc_reg[evict_pid] = 0xff; //update reg for PID to 0xff
 		// copy page table to disk
 		memcpy(dsk + (16 * evict_page_ID), mem + (16 * rnd_rbn_cnt), 16);
@@ -409,7 +414,7 @@ addr evict(int add_page_ID) {
 
 	// if this is a page
 	else {
-		// printf("this is a page\n");
+		printf("this is a page\n");
 		page_table_ID = (evict_page_ID / 5) * 5;
 		offset = (evict_page_ID % 5) - 1;
 
@@ -422,7 +427,7 @@ addr evict(int add_page_ID) {
 
 // 		if the page table corresponding to the page is in mem
 		if (pt_frame_idx != -1) {
-			// printf("the corresponding page table is in memory\n");
+			printf("the corresponding page table is in memory\n");
 // 			get PTE (PT + PID % 5)
 			page_table_addr = proc_reg[evict_pid];
 			PTE_addr = page_table_addr + offset;
@@ -437,7 +442,7 @@ addr evict(int add_page_ID) {
 
 // 		the page table corresponding to the page is in disk
 		else {
-			// printf("the corresponding page table is in disk\n");
+			printf("the corresponding page table is in disk\n");
 // 			copy page into disk
 			memcpy(dsk + (16 * evict_page_ID), mem + (16 * rnd_rbn_cnt), 16);
 // 			copy page table to mem
@@ -466,7 +471,7 @@ addr evict(int add_page_ID) {
 	// increment RR
 	rnd_rbn_cnt = (rnd_rbn_cnt + 1) % 4;
 
-	// printf("frame num evicted = %d\n", PFN >> 4);
+	printf("frame num evicted = %d\n", PFN >> 4);
 	return PFN;
 }
 
