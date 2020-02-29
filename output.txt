@@ -1,0 +1,1081 @@
+Welcome to Jerfy and Jyalu's virtual memory system!
+The program will prompt you to give it an instruction and execute it.
+It will continue doing so until you type in the string "stop".
+Each instruction you input must follow the format:
+	(process_id,instruction,virtual_address,value)
+	Arguments should be separated by a single comma i.e. ","
+
+Instructions? 5,allocate,0,0
+
+Your arguments were incorrect.
+The correct format is: (process_id,instruction,virtual_address,value)
+	- Arguments should be separated by a single comma i.e. ","
+	- process id: int in range [0, 3]
+	- instruction: either "allocate", "store", or "load"
+	- virtual address: int in range [0, 63]
+	- value: int in range [0, 255]
+To debug, type "debug,<MODE>"
+MODES:
+	MEM_MAP: prints out the contents of the entire memory array
+	DSK_MAP: prints out the contents of the entire disk array
+	MEM_DSK_MAP: prints out the contents of the entire memory and disk array
+	LIST_REG: prints out the contents of free_list and proc_reg, which are the Page_IDs occupying the page frames in memory and the locations of the page table for each process respectively
+	LIST_PTE: prints out the page table entries for each process
+	LIST: prints out the contents of both free_list and proc_reg
+	FULL: prints out all of the above information
+
+Instructions? 0,allocate,64,0
+
+Your arguments were incorrect.
+The correct format is: (process_id,instruction,virtual_address,value)
+	- Arguments should be separated by a single comma i.e. ","
+	- process id: int in range [0, 3]
+	- instruction: either "allocate", "store", or "load"
+	- virtual address: int in range [0, 63]
+	- value: int in range [0, 255]
+To debug, type "debug,<MODE>"
+MODES:
+	MEM_MAP: prints out the contents of the entire memory array
+	DSK_MAP: prints out the contents of the entire disk array
+	MEM_DSK_MAP: prints out the contents of the entire memory and disk array
+	LIST_REG: prints out the contents of free_list and proc_reg, which are the Page_IDs occupying the page frames in memory and the locations of the page table for each process respectively
+	LIST_PTE: prints out the page table entries for each process
+	LIST: prints out the contents of both free_list and proc_reg
+	FULL: prints out all of the above information
+
+Instructions? 0,allocate,0,256
+
+Your arguments were incorrect.
+The correct format is: (process_id,instruction,virtual_address,value)
+	- Arguments should be separated by a single comma i.e. ","
+	- process id: int in range [0, 3]
+	- instruction: either "allocate", "store", or "load"
+	- virtual address: int in range [0, 63]
+	- value: int in range [0, 255]
+To debug, type "debug,<MODE>"
+MODES:
+	MEM_MAP: prints out the contents of the entire memory array
+	DSK_MAP: prints out the contents of the entire disk array
+	MEM_DSK_MAP: prints out the contents of the entire memory and disk array
+	LIST_REG: prints out the contents of free_list and proc_reg, which are the Page_IDs occupying the page frames in memory and the locations of the page table for each process respectively
+	LIST_PTE: prints out the page table entries for each process
+	LIST: prints out the contents of both free_list and proc_reg
+	FULL: prints out all of the above information
+
+Instructions? 0,load,0,0
+
+ERROR: process 0 does not have any pages allocated to it, please allocate memory to it first
+
+Instructions? 0,load,25,0
+
+ERROR: process 0 does not have any pages allocated to it, please allocate memory to it first
+
+Instructions? 0,store,0,0
+
+ERROR: process 0 does not have any pages allocated to it, please allocate memory to it first
+
+Instructions? 0,store,36,52
+
+ERROR: process 0 does not have any pages allocated to it, please allocate memory to it first
+
+Instructions? 0,allocate,0,0
+
+Put page table for PID 0 into physical frame 0
+Mapped virtual address 0 (page 0) into physical frame 1
+
+Instructions? debug,LIST
+
+Page IDs in memory (FRAME#:PAGE_ID): 0:0, 1:1, 2:-1, 3:-1
+Page table address locations (PID:ADDRESS): 0:0x0, 1:0x80, 2:0x80, 3:0x80
+Reading page table entries in memory:
+PID 0's page table:
+PAGE_ID:1, PTE:00010010
+PAGE_ID:2, PTE:10000000
+PAGE_ID:3, PTE:10000000
+PAGE_ID:4, PTE:10000000
+PID 1's page table does not exist
+PID 2's page table does not exist
+PID 3's page table does not exist
+
+Instructions? 0,store,7,255
+
+ERROR: illegal write to a read-only page
+
+Instructions? debug,LIST
+
+Page IDs in memory (FRAME#:PAGE_ID): 0:0, 1:1, 2:-1, 3:-1
+Page table address locations (PID:ADDRESS): 0:0x0, 1:0x80, 2:0x80, 3:0x80
+Reading page table entries in memory:
+PID 0's page table:
+PAGE_ID:1, PTE:00010010
+PAGE_ID:2, PTE:10000000
+PAGE_ID:3, PTE:10000000
+PAGE_ID:4, PTE:10000000
+PID 1's page table does not exist
+PID 2's page table does not exist
+PID 3's page table does not exist
+
+Instructions? 0,allocate,0,1
+
+Updating permissions for virtual page 0 (frame 1)
+
+Instructions? debug,LIST
+
+Page IDs in memory (FRAME#:PAGE_ID): 0:0, 1:1, 2:-1, 3:-1
+Page table address locations (PID:ADDRESS): 0:0x0, 1:0x80, 2:0x80, 3:0x80
+Reading page table entries in memory:
+PID 0's page table:
+PAGE_ID:1, PTE:00010011
+PAGE_ID:2, PTE:10000000
+PAGE_ID:3, PTE:10000000
+PAGE_ID:4, PTE:10000000
+PID 1's page table does not exist
+PID 2's page table does not exist
+PID 3's page table does not exist
+
+Instructions? 0,store,7,255
+
+Stored value 255 at virtual address 7 (physical address 23)
+
+Instructions? debug,LIST
+
+Page IDs in memory (FRAME#:PAGE_ID): 0:0, 1:1, 2:-1, 3:-1
+Page table address locations (PID:ADDRESS): 0:0x0, 1:0x80, 2:0x80, 3:0x80
+Reading page table entries in memory:
+PID 0's page table:
+PAGE_ID:1, PTE:00010011
+PAGE_ID:2, PTE:10000000
+PAGE_ID:3, PTE:10000000
+PAGE_ID:4, PTE:10000000
+PID 1's page table does not exist
+PID 2's page table does not exist
+PID 3's page table does not exist
+
+Instructions? 0,load,7,0
+
+The value 255 is at virtual address 7 (physical address 23)
+
+Instructions? debug,LIST
+
+Page IDs in memory (FRAME#:PAGE_ID): 0:0, 1:1, 2:-1, 3:-1
+Page table address locations (PID:ADDRESS): 0:0x0, 1:0x80, 2:0x80, 3:0x80
+Reading page table entries in memory:
+PID 0's page table:
+PAGE_ID:1, PTE:00010011
+PAGE_ID:2, PTE:10000000
+PAGE_ID:3, PTE:10000000
+PAGE_ID:4, PTE:10000000
+PID 1's page table does not exist
+PID 2's page table does not exist
+PID 3's page table does not exist
+
+Instructions? 0,allocate,10,1
+
+ERROR: virtual page 0 is already mapped with rw_bit=1
+
+Instructions? debug,LIST
+
+Page IDs in memory (FRAME#:PAGE_ID): 0:0, 1:1, 2:-1, 3:-1
+Page table address locations (PID:ADDRESS): 0:0x0, 1:0x80, 2:0x80, 3:0x80
+Reading page table entries in memory:
+PID 0's page table:
+PAGE_ID:1, PTE:00010011
+PAGE_ID:2, PTE:10000000
+PAGE_ID:3, PTE:10000000
+PAGE_ID:4, PTE:10000000
+PID 1's page table does not exist
+PID 2's page table does not exist
+PID 3's page table does not exist
+
+Instructions? 0,allocate,10,2
+
+ERROR: invalid value passed to allocation of process 0
+
+Instructions? debug,LIST
+
+Page IDs in memory (FRAME#:PAGE_ID): 0:0, 1:1, 2:-1, 3:-1
+Page table address locations (PID:ADDRESS): 0:0x0, 1:0x80, 2:0x80, 3:0x80
+Reading page table entries in memory:
+PID 0's page table:
+PAGE_ID:1, PTE:00010011
+PAGE_ID:2, PTE:10000000
+PAGE_ID:3, PTE:10000000
+PAGE_ID:4, PTE:10000000
+PID 1's page table does not exist
+PID 2's page table does not exist
+PID 3's page table does not exist
+
+Instructions? 0,allocate,16,1
+
+Mapped virtual address 16 (page 1) into physical frame 2
+
+Instructions? debug,LIST
+
+Page IDs in memory (FRAME#:PAGE_ID): 0:0, 1:1, 2:2, 3:-1
+Page table address locations (PID:ADDRESS): 0:0x0, 1:0x80, 2:0x80, 3:0x80
+Reading page table entries in memory:
+PID 0's page table:
+PAGE_ID:1, PTE:00010011
+PAGE_ID:2, PTE:00100011
+PAGE_ID:3, PTE:10000000
+PAGE_ID:4, PTE:10000000
+PID 1's page table does not exist
+PID 2's page table does not exist
+PID 3's page table does not exist
+
+Instructions? 0,allocate,32,1
+
+Mapped virtual address 32 (page 2) into physical frame 3
+
+Instructions? debug,LIST
+
+Page IDs in memory (FRAME#:PAGE_ID): 0:0, 1:1, 2:2, 3:3
+Page table address locations (PID:ADDRESS): 0:0x0, 1:0x80, 2:0x80, 3:0x80
+Reading page table entries in memory:
+PID 0's page table:
+PAGE_ID:1, PTE:00010011
+PAGE_ID:2, PTE:00100011
+PAGE_ID:3, PTE:00110011
+PAGE_ID:4, PTE:10000000
+PID 1's page table does not exist
+PID 2's page table does not exist
+PID 3's page table does not exist
+
+Instructions? 1,allocate,0,0
+
+Swapped frame 0 to disk at swap slot 0
+Put page table for PID 1 into physical frame 0
+Swapped frame 1 to disk at swap slot 1
+Mapped virtual address 0 (page 0) into physical frame 1
+
+Instructions? debug,LIST
+
+Page IDs in memory (FRAME#:PAGE_ID): 0:5, 1:6, 2:2, 3:3
+Page table address locations (PID:ADDRESS): 0:0xff, 1:0x0, 2:0x80, 3:0x80
+Reading page table entries in memory:
+PID 0's page table is in disk
+PID 1's page table:
+PAGE_ID:6, PTE:00010010
+PAGE_ID:7, PTE:10000000
+PAGE_ID:8, PTE:10000000
+PAGE_ID:9, PTE:10000000
+PID 2's page table does not exist
+PID 3's page table does not exist
+
+Instructions? 0,load,7,0
+
+Swapped frame 2 to disk at swap slot 2
+Swapped frame 3 to disk at swap slot 3
+The value 255 is at virtual address 7 (physical address 55)
+
+Instructions? debug,LIST
+
+Page IDs in memory (FRAME#:PAGE_ID): 0:5, 1:6, 2:0, 3:1
+Page table address locations (PID:ADDRESS): 0:0xff, 1:0x0, 2:0x80, 3:0x80
+Reading page table entries in memory:
+PID 0's page table is in disk
+PID 1's page table:
+PAGE_ID:6, PTE:00010010
+PAGE_ID:7, PTE:10000000
+PAGE_ID:8, PTE:10000000
+PAGE_ID:9, PTE:10000000
+PID 2's page table does not exist
+PID 3's page table does not exist
+
+Instructions? 1,allocate,7,0
+
+ERROR: virtual page 0 is already mapped with rw_bit=0
+
+Instructions? debug,LIST
+
+Page IDs in memory (FRAME#:PAGE_ID): 0:5, 1:6, 2:0, 3:1
+Page table address locations (PID:ADDRESS): 0:0xff, 1:0x0, 2:0x80, 3:0x80
+Reading page table entries in memory:
+PID 0's page table is in disk
+PID 1's page table:
+PAGE_ID:6, PTE:00010010
+PAGE_ID:7, PTE:10000000
+PAGE_ID:8, PTE:10000000
+PAGE_ID:9, PTE:10000000
+PID 2's page table does not exist
+PID 3's page table does not exist
+
+Instructions? 1,allocate,20,1
+
+Swapped frame 1 to disk at swap slot 6
+Mapped virtual address 20 (page 1) into physical frame 1
+
+Instructions? debug,LIST
+
+Page IDs in memory (FRAME#:PAGE_ID): 0:5, 1:7, 2:0, 3:1
+Page table address locations (PID:ADDRESS): 0:0xff, 1:0x0, 2:0x80, 3:0x80
+Reading page table entries in memory:
+PID 0's page table is in disk
+PID 1's page table:
+PAGE_ID:6, PTE:00010000
+PAGE_ID:7, PTE:00010011
+PAGE_ID:8, PTE:10000000
+PAGE_ID:9, PTE:10000000
+PID 2's page table does not exist
+PID 3's page table does not exist
+
+Instructions? 1,allocate,35,1
+
+Swapped frame 2 to disk at swap slot 0
+Mapped virtual address 35 (page 2) into physical frame 2
+
+Instructions? debug,LIST
+
+Page IDs in memory (FRAME#:PAGE_ID): 0:5, 1:7, 2:8, 3:1
+Page table address locations (PID:ADDRESS): 0:0xff, 1:0x0, 2:0x80, 3:0x80
+Reading page table entries in memory:
+PID 0's page table is in disk
+PID 1's page table:
+PAGE_ID:6, PTE:00010000
+PAGE_ID:7, PTE:00010011
+PAGE_ID:8, PTE:00100011
+PAGE_ID:9, PTE:10000000
+PID 2's page table does not exist
+PID 3's page table does not exist
+
+Instructions? 1,allocate,48,1
+
+Swapped frame 3 to disk at swap slot 1
+Mapped virtual address 48 (page 3) into physical frame 3
+
+Instructions? debug,LIST
+
+Page IDs in memory (FRAME#:PAGE_ID): 0:5, 1:7, 2:8, 3:9
+Page table address locations (PID:ADDRESS): 0:0xff, 1:0x0, 2:0x80, 3:0x80
+Reading page table entries in memory:
+PID 0's page table is in disk
+PID 1's page table:
+PAGE_ID:6, PTE:00010000
+PAGE_ID:7, PTE:00010011
+PAGE_ID:8, PTE:00100011
+PAGE_ID:9, PTE:00110011
+PID 2's page table does not exist
+PID 3's page table does not exist
+
+Instructions? 0,allocate,48,1
+
+swapping to get page table from
+Swapped frame 0 to disk at swap slot 5
+Put page table for PID 0 into physical frame 0
+Swapped frame 1 to disk at swap slot 7
+Mapped virtual address 48 (page 3) into physical frame 1
+
+Instructions? debug,LIST
+
+Page IDs in memory (FRAME#:PAGE_ID): 0:0, 1:4, 2:8, 3:9
+Page table address locations (PID:ADDRESS): 0:0x0, 1:0xff, 2:0x80, 3:0x80
+Reading page table entries in memory:
+PID 0's page table:
+PAGE_ID:1, PTE:00010001
+PAGE_ID:2, PTE:00100001
+PAGE_ID:3, PTE:00110011
+PAGE_ID:4, PTE:00010011
+PID 1's page table is in disk
+PID 2's page table does not exist
+PID 3's page table does not exist
+
+Instructions? 1,store,2,70
+
+Swapped frame 2 to disk at swap slot 8
+ERROR: illegal write to a read-only page
+
+Instructions? debug,LIST
+
+Page IDs in memory (FRAME#:PAGE_ID): 0:0, 1:4, 2:5, 3:9
+Page table address locations (PID:ADDRESS): 0:0x0, 1:0xff, 2:0x80, 3:0x80
+Reading page table entries in memory:
+PID 0's page table:
+PAGE_ID:1, PTE:00010001
+PAGE_ID:2, PTE:00100001
+PAGE_ID:3, PTE:00110011
+PAGE_ID:4, PTE:00010011
+PID 1's page table is in disk
+PID 2's page table does not exist
+PID 3's page table does not exist
+
+Instructions? 1,store,63,63
+
+Swapped frame 3 to disk at swap slot 9
+Stored value 63 at virtual address 63 (physical address 63)
+
+Instructions? debug,LIST
+
+Page IDs in memory (FRAME#:PAGE_ID): 0:0, 1:4, 2:5, 3:5
+Page table address locations (PID:ADDRESS): 0:0x0, 1:0xff, 2:0x80, 3:0x80
+Reading page table entries in memory:
+PID 0's page table:
+PAGE_ID:1, PTE:00010001
+PAGE_ID:2, PTE:00100001
+PAGE_ID:3, PTE:00110001
+PAGE_ID:4, PTE:00010011
+PID 1's page table is in disk
+PID 2's page table does not exist
+PID 3's page table does not exist
+
+Instructions? 0,store,12,69
+
+Swapped frame 1 to disk at swap slot 4
+Stored value 69 at virtual address 12 (physical address 28)
+
+Instructions? debug,LIST
+
+Page IDs in memory (FRAME#:PAGE_ID): 0:0, 1:1, 2:5, 3:5
+Page table address locations (PID:ADDRESS): 0:0x0, 1:0xff, 2:0x80, 3:0x80
+Reading page table entries in memory:
+PID 0's page table:
+PAGE_ID:1, PTE:00010001
+PAGE_ID:2, PTE:00100001
+PAGE_ID:3, PTE:00110001
+PAGE_ID:4, PTE:00010001
+PID 1's page table is in disk
+PID 2's page table does not exist
+PID 3's page table does not exist
+
+Instructions? 0,load,7,0
+
+Swapped frame 2 to disk at swap slot 5
+The value 255 is at virtual address 7 (physical address 39)
+
+Instructions? debug,LIST
+
+Page IDs in memory (FRAME#:PAGE_ID): 0:0, 1:1, 2:1, 3:5
+Page table address locations (PID:ADDRESS): 0:0x0, 1:0xff, 2:0x80, 3:0x80
+Reading page table entries in memory:
+PID 0's page table:
+PAGE_ID:1, PTE:00010001
+PAGE_ID:2, PTE:00100001
+PAGE_ID:3, PTE:00110001
+PAGE_ID:4, PTE:00010001
+PID 1's page table is in disk
+PID 2's page table does not exist
+PID 3's page table does not exist
+
+Instructions? 2,allocate,50,0
+
+Swapped frame 3 to disk at swap slot 5
+Put page table for PID 2 into physical frame 3
+Swapped frame 0 to disk at swap slot 0
+Mapped virtual address 50 (page 3) into physical frame 0
+
+Instructions? debug,LIST
+
+Page IDs in memory (FRAME#:PAGE_ID): 0:14, 1:1, 2:1, 3:10
+Page table address locations (PID:ADDRESS): 0:0xff, 1:0xff, 2:0x30, 3:0x80
+Reading page table entries in memory:
+PID 0's page table is in disk
+PID 1's page table is in disk
+PID 2's page table:
+PAGE_ID:11, PTE:10000000
+PAGE_ID:12, PTE:10000000
+PAGE_ID:13, PTE:10000000
+PAGE_ID:14, PTE:00000010
+PID 3's page table does not exist
+
+Instructions? 3,allocate,2,1
+
+Swapped frame 1 to disk at swap slot 1
+Put page table for PID 3 into physical frame 1
+Swapped frame 2 to disk at swap slot 1
+Mapped virtual address 2 (page 0) into physical frame 2
+
+Instructions? debug,LIST
+
+Page IDs in memory (FRAME#:PAGE_ID): 0:14, 1:15, 2:16, 3:10
+Page table address locations (PID:ADDRESS): 0:0xff, 1:0xff, 2:0x30, 3:0x10
+Reading page table entries in memory:
+PID 0's page table is in disk
+PID 1's page table is in disk
+PID 2's page table:
+PAGE_ID:11, PTE:10000000
+PAGE_ID:12, PTE:10000000
+PAGE_ID:13, PTE:10000000
+PAGE_ID:14, PTE:00000010
+PID 3's page table:
+PAGE_ID:16, PTE:00100011
+PAGE_ID:17, PTE:10000000
+PAGE_ID:18, PTE:10000000
+PAGE_ID:19, PTE:10000000
+
+Instructions? 3,allocate,1,1
+
+ERROR: virtual page 0 is already mapped with rw_bit=1
+
+Instructions? debug,LIST,
+
+Your arguments were incorrect.
+The correct format is: (process_id,instruction,virtual_address,value)
+	- Arguments should be separated by a single comma i.e. ","
+	- process id: int in range [0, 3]
+	- instruction: either "allocate", "store", or "load"
+	- virtual address: int in range [0, 63]
+	- value: int in range [0, 255]
+To debug, type "debug,<MODE>"
+MODES:
+	MEM_MAP: prints out the contents of the entire memory array
+	DSK_MAP: prints out the contents of the entire disk array
+	MEM_DSK_MAP: prints out the contents of the entire memory and disk array
+	LIST_REG: prints out the contents of free_list and proc_reg, which are the Page_IDs occupying the page frames in memory and the locations of the page table for each process respectively
+	LIST_PTE: prints out the page table entries for each process
+	LIST: prints out the contents of both free_list and proc_reg
+	FULL: prints out all of the above information
+
+Instructions? 3,allocate,17,1
+
+Swapped frame 3 to disk at swap slot 10
+Mapped virtual address 17 (page 1) into physical frame 3
+
+Instructions? debug,LIST
+
+Page IDs in memory (FRAME#:PAGE_ID): 0:14, 1:15, 2:16, 3:17
+Page table address locations (PID:ADDRESS): 0:0xff, 1:0xff, 2:0xff, 3:0x10
+Reading page table entries in memory:
+PID 0's page table is in disk
+PID 1's page table is in disk
+PID 2's page table is in disk
+PID 3's page table:
+PAGE_ID:16, PTE:00100011
+PAGE_ID:17, PTE:00110011
+PAGE_ID:18, PTE:10000000
+PAGE_ID:19, PTE:10000000
+
+Instructions? 3,allocate,39,1
+
+Swapped frame 0 to disk at swap slot 14
+Mapped virtual address 39 (page 2) into physical frame 0
+
+Instructions? debug,LIST
+
+Page IDs in memory (FRAME#:PAGE_ID): 0:18, 1:15, 2:16, 3:17
+Page table address locations (PID:ADDRESS): 0:0xff, 1:0xff, 2:0xff, 3:0x10
+Reading page table entries in memory:
+PID 0's page table is in disk
+PID 1's page table is in disk
+PID 2's page table is in disk
+PID 3's page table:
+PAGE_ID:16, PTE:00100011
+PAGE_ID:17, PTE:00110011
+PAGE_ID:18, PTE:00000011
+PAGE_ID:19, PTE:10000000
+
+Instructions? 2,allocate,50,1
+
+swapping to get page table from
+Swapped frame 1 to disk at swap slot 15
+Put page table for PID 2 into physical frame 1
+Updating permissions for virtual page 3 (frame in disk)
+
+Instructions? debug,LIST
+
+Page IDs in memory (FRAME#:PAGE_ID): 0:18, 1:10, 2:16, 3:17
+Page table address locations (PID:ADDRESS): 0:0xff, 1:0xff, 2:0x10, 3:0xff
+Reading page table entries in memory:
+PID 0's page table is in disk
+PID 1's page table is in disk
+PID 2's page table:
+PAGE_ID:11, PTE:10000000
+PAGE_ID:12, PTE:10000000
+PAGE_ID:13, PTE:10000000
+PAGE_ID:14, PTE:00000001
+PID 3's page table is in disk
+
+Instructions? 3,allocate,54,1
+
+swapping to get page table from
+Swapped frame 2 to disk at swap slot 16
+Put page table for PID 3 into physical frame 2
+Swapped frame 3 to disk at swap slot 17
+Mapped virtual address 54 (page 3) into physical frame 3
+
+Instructions? debug,LIST
+
+Page IDs in memory (FRAME#:PAGE_ID): 0:18, 1:10, 2:15, 3:19
+Page table address locations (PID:ADDRESS): 0:0xff, 1:0xff, 2:0x10, 3:0x20
+Reading page table entries in memory:
+PID 0's page table is in disk
+PID 1's page table is in disk
+PID 2's page table:
+PAGE_ID:11, PTE:10000000
+PAGE_ID:12, PTE:10000000
+PAGE_ID:13, PTE:10000000
+PAGE_ID:14, PTE:00000001
+PID 3's page table:
+PAGE_ID:16, PTE:00100001
+PAGE_ID:17, PTE:00110001
+PAGE_ID:18, PTE:00000011
+PAGE_ID:19, PTE:00110011
+
+Instructions? 2,allocate,3,1
+
+Swapped frame 0 to disk at swap slot 18
+Mapped virtual address 3 (page 0) into physical frame 0
+
+Instructions? debug,LIST
+
+Page IDs in memory (FRAME#:PAGE_ID): 0:11, 1:10, 2:15, 3:19
+Page table address locations (PID:ADDRESS): 0:0xff, 1:0xff, 2:0x10, 3:0x20
+Reading page table entries in memory:
+PID 0's page table is in disk
+PID 1's page table is in disk
+PID 2's page table:
+PAGE_ID:11, PTE:00000011
+PAGE_ID:12, PTE:10000000
+PAGE_ID:13, PTE:10000000
+PAGE_ID:14, PTE:00000001
+PID 3's page table:
+PAGE_ID:16, PTE:00100001
+PAGE_ID:17, PTE:00110001
+PAGE_ID:18, PTE:00000001
+PAGE_ID:19, PTE:00110011
+
+Instructions? 3,load,16,0
+
+Swapped frame 1 to disk at swap slot 10
+The value 0 is at virtual address 16 (physical address 16)
+
+Instructions? debug,LIST
+
+Page IDs in memory (FRAME#:PAGE_ID): 0:11, 1:32, 2:15, 3:19
+Page table address locations (PID:ADDRESS): 0:0xff, 1:0xff, 2:0xff, 3:0x20
+Reading page table entries in memory:
+PID 0's page table is in disk
+PID 1's page table is in disk
+PID 2's page table is in disk
+PID 3's page table:
+PAGE_ID:16, PTE:00100001
+PAGE_ID:17, PTE:00110001
+PAGE_ID:18, PTE:00000001
+PAGE_ID:19, PTE:00110011
+
+Instructions? 2,store,60,9
+
+Swapped frame 2 to disk at swap slot 15
+Swapped frame 3 to disk at swap slot 19
+Stored value 9 at virtual address 60 (physical address 60)
+
+Instructions? debug,FULL
+
+Memory dump:
+MEMORY PAGE FRAME 0
+mem[0]: 128
+mem[1]: 128
+mem[2]: 128
+mem[3]: 128
+mem[4]: 128
+mem[5]: 128
+mem[6]: 128
+mem[7]: 128
+mem[8]: 128
+mem[9]: 128
+mem[10]: 128
+mem[11]: 128
+mem[12]: 128
+mem[13]: 128
+mem[14]: 128
+mem[15]: 128
+MEMORY PAGE FRAME 1
+mem[16]: 0
+mem[17]: 0
+mem[18]: 0
+mem[19]: 0
+mem[20]: 0
+mem[21]: 0
+mem[22]: 0
+mem[23]: 0
+mem[24]: 0
+mem[25]: 0
+mem[26]: 0
+mem[27]: 0
+mem[28]: 0
+mem[29]: 0
+mem[30]: 0
+mem[31]: 0
+MEMORY PAGE FRAME 2
+mem[32]: 3
+mem[33]: 128
+mem[34]: 128
+mem[35]: 1
+mem[36]: 128
+mem[37]: 128
+mem[38]: 128
+mem[39]: 128
+mem[40]: 128
+mem[41]: 128
+mem[42]: 128
+mem[43]: 128
+mem[44]: 128
+mem[45]: 128
+mem[46]: 128
+mem[47]: 128
+MEMORY PAGE FRAME 3
+mem[48]: 0
+mem[49]: 0
+mem[50]: 0
+mem[51]: 0
+mem[52]: 0
+mem[53]: 0
+mem[54]: 0
+mem[55]: 0
+mem[56]: 0
+mem[57]: 0
+mem[58]: 0
+mem[59]: 0
+mem[60]: 9
+mem[61]: 0
+mem[62]: 0
+mem[63]: 0
+Disk dump:
+DISK PAGE ID 0
+dsk[0]: 17
+dsk[1]: 33
+dsk[2]: 49
+dsk[3]: 17
+dsk[4]: 128
+dsk[5]: 128
+dsk[6]: 128
+dsk[7]: 128
+dsk[8]: 128
+dsk[9]: 128
+dsk[10]: 128
+dsk[11]: 128
+dsk[12]: 128
+dsk[13]: 128
+dsk[14]: 128
+dsk[15]: 128
+DISK PAGE ID 1
+dsk[16]: 128
+dsk[17]: 128
+dsk[18]: 128
+dsk[19]: 128
+dsk[20]: 128
+dsk[21]: 128
+dsk[22]: 128
+dsk[23]: 255
+dsk[24]: 128
+dsk[25]: 128
+dsk[26]: 128
+dsk[27]: 128
+dsk[28]: 128
+dsk[29]: 128
+dsk[30]: 128
+dsk[31]: 128
+DISK PAGE ID 2
+dsk[32]: 128
+dsk[33]: 128
+dsk[34]: 128
+dsk[35]: 128
+dsk[36]: 128
+dsk[37]: 128
+dsk[38]: 128
+dsk[39]: 128
+dsk[40]: 128
+dsk[41]: 128
+dsk[42]: 128
+dsk[43]: 128
+dsk[44]: 128
+dsk[45]: 128
+dsk[46]: 128
+dsk[47]: 128
+DISK PAGE ID 3
+dsk[48]: 128
+dsk[49]: 128
+dsk[50]: 128
+dsk[51]: 128
+dsk[52]: 128
+dsk[53]: 128
+dsk[54]: 128
+dsk[55]: 128
+dsk[56]: 128
+dsk[57]: 128
+dsk[58]: 128
+dsk[59]: 128
+dsk[60]: 128
+dsk[61]: 128
+dsk[62]: 128
+dsk[63]: 128
+DISK PAGE ID 4
+dsk[64]: 128
+dsk[65]: 128
+dsk[66]: 128
+dsk[67]: 128
+dsk[68]: 128
+dsk[69]: 128
+dsk[70]: 128
+dsk[71]: 128
+dsk[72]: 128
+dsk[73]: 128
+dsk[74]: 128
+dsk[75]: 128
+dsk[76]: 128
+dsk[77]: 128
+dsk[78]: 128
+dsk[79]: 128
+DISK PAGE ID 5
+dsk[80]: 16
+dsk[81]: 17
+dsk[82]: 33
+dsk[83]: 51
+dsk[84]: 128
+dsk[85]: 128
+dsk[86]: 128
+dsk[87]: 128
+dsk[88]: 128
+dsk[89]: 128
+dsk[90]: 128
+dsk[91]: 128
+dsk[92]: 128
+dsk[93]: 128
+dsk[94]: 128
+dsk[95]: 63
+DISK PAGE ID 6
+dsk[96]: 128
+dsk[97]: 128
+dsk[98]: 128
+dsk[99]: 128
+dsk[100]: 128
+dsk[101]: 128
+dsk[102]: 128
+dsk[103]: 128
+dsk[104]: 128
+dsk[105]: 128
+dsk[106]: 128
+dsk[107]: 128
+dsk[108]: 128
+dsk[109]: 128
+dsk[110]: 128
+dsk[111]: 128
+DISK PAGE ID 7
+dsk[112]: 128
+dsk[113]: 128
+dsk[114]: 128
+dsk[115]: 128
+dsk[116]: 128
+dsk[117]: 128
+dsk[118]: 128
+dsk[119]: 128
+dsk[120]: 128
+dsk[121]: 128
+dsk[122]: 128
+dsk[123]: 128
+dsk[124]: 128
+dsk[125]: 128
+dsk[126]: 128
+dsk[127]: 128
+DISK PAGE ID 8
+dsk[128]: 128
+dsk[129]: 128
+dsk[130]: 128
+dsk[131]: 128
+dsk[132]: 128
+dsk[133]: 128
+dsk[134]: 128
+dsk[135]: 128
+dsk[136]: 128
+dsk[137]: 128
+dsk[138]: 128
+dsk[139]: 128
+dsk[140]: 128
+dsk[141]: 128
+dsk[142]: 128
+dsk[143]: 128
+DISK PAGE ID 9
+dsk[144]: 128
+dsk[145]: 128
+dsk[146]: 128
+dsk[147]: 128
+dsk[148]: 128
+dsk[149]: 128
+dsk[150]: 128
+dsk[151]: 128
+dsk[152]: 128
+dsk[153]: 128
+dsk[154]: 128
+dsk[155]: 128
+dsk[156]: 128
+dsk[157]: 128
+dsk[158]: 128
+dsk[159]: 128
+DISK PAGE ID 10
+dsk[160]: 3
+dsk[161]: 128
+dsk[162]: 128
+dsk[163]: 1
+dsk[164]: 128
+dsk[165]: 128
+dsk[166]: 128
+dsk[167]: 128
+dsk[168]: 128
+dsk[169]: 128
+dsk[170]: 128
+dsk[171]: 128
+dsk[172]: 128
+dsk[173]: 128
+dsk[174]: 128
+dsk[175]: 128
+DISK PAGE ID 11
+dsk[176]: 128
+dsk[177]: 128
+dsk[178]: 128
+dsk[179]: 128
+dsk[180]: 128
+dsk[181]: 128
+dsk[182]: 128
+dsk[183]: 128
+dsk[184]: 128
+dsk[185]: 128
+dsk[186]: 128
+dsk[187]: 128
+dsk[188]: 128
+dsk[189]: 128
+dsk[190]: 128
+dsk[191]: 128
+DISK PAGE ID 12
+dsk[192]: 128
+dsk[193]: 128
+dsk[194]: 128
+dsk[195]: 128
+dsk[196]: 128
+dsk[197]: 128
+dsk[198]: 128
+dsk[199]: 128
+dsk[200]: 128
+dsk[201]: 128
+dsk[202]: 128
+dsk[203]: 128
+dsk[204]: 128
+dsk[205]: 128
+dsk[206]: 128
+dsk[207]: 128
+DISK PAGE ID 13
+dsk[208]: 128
+dsk[209]: 128
+dsk[210]: 128
+dsk[211]: 128
+dsk[212]: 128
+dsk[213]: 128
+dsk[214]: 128
+dsk[215]: 128
+dsk[216]: 128
+dsk[217]: 128
+dsk[218]: 128
+dsk[219]: 128
+dsk[220]: 128
+dsk[221]: 128
+dsk[222]: 128
+dsk[223]: 128
+DISK PAGE ID 14
+dsk[224]: 128
+dsk[225]: 128
+dsk[226]: 128
+dsk[227]: 128
+dsk[228]: 128
+dsk[229]: 128
+dsk[230]: 128
+dsk[231]: 128
+dsk[232]: 128
+dsk[233]: 128
+dsk[234]: 128
+dsk[235]: 128
+dsk[236]: 128
+dsk[237]: 128
+dsk[238]: 128
+dsk[239]: 128
+DISK PAGE ID 15
+dsk[240]: 33
+dsk[241]: 49
+dsk[242]: 1
+dsk[243]: 49
+dsk[244]: 128
+dsk[245]: 128
+dsk[246]: 128
+dsk[247]: 128
+dsk[248]: 128
+dsk[249]: 128
+dsk[250]: 128
+dsk[251]: 128
+dsk[252]: 128
+dsk[253]: 128
+dsk[254]: 128
+dsk[255]: 128
+DISK PAGE ID 16
+dsk[256]: 128
+dsk[257]: 128
+dsk[258]: 128
+dsk[259]: 128
+dsk[260]: 128
+dsk[261]: 128
+dsk[262]: 128
+dsk[263]: 128
+dsk[264]: 128
+dsk[265]: 128
+dsk[266]: 128
+dsk[267]: 128
+dsk[268]: 128
+dsk[269]: 128
+dsk[270]: 128
+dsk[271]: 128
+DISK PAGE ID 17
+dsk[272]: 128
+dsk[273]: 128
+dsk[274]: 128
+dsk[275]: 128
+dsk[276]: 128
+dsk[277]: 128
+dsk[278]: 128
+dsk[279]: 128
+dsk[280]: 128
+dsk[281]: 128
+dsk[282]: 128
+dsk[283]: 128
+dsk[284]: 128
+dsk[285]: 128
+dsk[286]: 128
+dsk[287]: 128
+DISK PAGE ID 18
+dsk[288]: 128
+dsk[289]: 128
+dsk[290]: 128
+dsk[291]: 128
+dsk[292]: 128
+dsk[293]: 128
+dsk[294]: 128
+dsk[295]: 128
+dsk[296]: 128
+dsk[297]: 128
+dsk[298]: 128
+dsk[299]: 128
+dsk[300]: 128
+dsk[301]: 128
+dsk[302]: 128
+dsk[303]: 128
+DISK PAGE ID 19
+dsk[304]: 128
+dsk[305]: 128
+dsk[306]: 128
+dsk[307]: 128
+dsk[308]: 128
+dsk[309]: 128
+dsk[310]: 128
+dsk[311]: 128
+dsk[312]: 128
+dsk[313]: 128
+dsk[314]: 128
+dsk[315]: 128
+dsk[316]: 128
+dsk[317]: 128
+dsk[318]: 128
+dsk[319]: 128
+Page IDs in memory (FRAME#:PAGE_ID): 0:11, 1:32, 2:10, 3:59
+Page table address locations (PID:ADDRESS): 0:0xff, 1:0xff, 2:0xff, 3:0xff
+Reading page table entries in memory:
+PID 0's page table is in disk
+PID 1's page table is in disk
+PID 2's page table is in disk
+PID 3's page table is in disk
+
+Instructions? stop
+Stopping program
