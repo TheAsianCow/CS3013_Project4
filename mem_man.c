@@ -1,3 +1,7 @@
+// Project 4
+// CS 3013
+// Jeffrey Huang and Jyalu Wu
+
 #include "mem_man.h"
 
 addr mem[64];
@@ -8,9 +12,10 @@ int rnd_rbn_cnt; // page to evict - a counter for swap
 addr dsk[320];//(1 page for page table+4 pages for data)*4 processes*16 bytes/page
 addr proc_reg[4];//stores the physical address that points to the page table for the corresponding PID
 				 //-1 means that the process doesn't have a page table
-int not_alloc; // 1 means that the program can't swap since the page ID to add hasn't been allocated
-				// 0 means that swap was successful
 
+/*
+ * Runs the virtual memory system, relying on user input for instructions.
+ */
 int main(int argc, char* argv[]){
 	int pid;
 	char* instruction;
@@ -39,6 +44,7 @@ int main(int argc, char* argv[]){
     printf("It will continue doing so until you type in the string \"stop\".\n");
     printf("Each instruction you input must follow the format:\n");
     printf("\t(process_id,instruction,virtual_address,value)\n");
+    printf("\tFor example:\tInstruction? 0,allocate,0,1\n");
 	printf("\tArguments should be separated by a single comma i.e. \",\"\n");
 
 	// run the program
@@ -87,6 +93,7 @@ int main(int argc, char* argv[]){
 
 /*
  * Checks if the user wants to exit the program.
+ * The program will exit when the user types "stop" at any time.
  */
 int exit_mem_man() {
 	char line[20];
@@ -346,8 +353,11 @@ addr find_free(int page_id){
 }
 
 /*
- * Pages out a page of its own choosing to disk and returns the
- * physical address of the page frame in physical memory that it just freed.
+ * Pages out a page of its own choosing to disk according to the round
+ * robin algorithm and returns the physical address of the page frame
+ * that it just swapped from in memory.
+ * @param page_ID, the ID of the page to swap in
+ * @return the physical address of the page frame it just swapped from
  */
 addr swap(int page_ID) {
 	int free_spot = 0;
@@ -388,7 +398,11 @@ addr swap(int page_ID) {
 	return free_PFN;
 }
 
-// returns the PFN of the page it evicted in memory
+/*
+ * Evicts a page from memory using the round robin algorithm.
+ * @param add_page_ID, the ID of the page it wants to swap in later
+ * @return the physical address of the page frame it just swapped from
+ */
 addr evict(int add_page_ID) {
 	int evict_page_ID;
 	int page_table_ID;
@@ -488,6 +502,10 @@ addr evict(int add_page_ID) {
 
 /*
  * Returns the physical mem address of a given virtual address.
+ * @param pid, the given process ID
+ * @param address, the given virtual address
+ * @param op, the given operation - either read or write
+ * @return the physical mem address
  */
 addr VPN_TO_MEM(int pid, addr address, int op){
 	addr page_table_addr = proc_reg[pid];
@@ -517,6 +535,11 @@ addr VPN_TO_MEM(int pid, addr address, int op){
 	return PFN+offset;//adds the PFN back to the offset to get the address in the frame that has the data
 }
 
+/*
+ * Handles an error and prints out an error statement.
+ * @param err, the given error
+ * @param err_val, the value associated with the error
+ */
 void err_handler(addr err, int err_val, int err_val2){
 	switch(err){
 		case OUT_OF_BOUNDS: 
@@ -546,6 +569,10 @@ void err_handler(addr err, int err_val, int err_val2){
 	}
 }
 
+/*
+ * Goes into the specified debugger mode.
+ * @param the given mode
+ */
 void debugger(int mode){
 	int i = 0;
 	switch(mode){
