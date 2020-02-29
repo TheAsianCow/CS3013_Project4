@@ -44,6 +44,7 @@ int main(int argc, char* argv[]){
     printf("It will continue doing so until you type in the string \"stop\".\n");
     printf("Each instruction you input must follow the format:\n");
     printf("\t(process_id,instruction,virtual_address,value)\n");
+    printf("\tFor example:\tInstruction? 0,allocate,0,1\n");
 	printf("\tArguments should be separated by a single comma i.e. \",\"\n");
 
 	// run the program
