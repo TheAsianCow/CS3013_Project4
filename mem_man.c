@@ -514,6 +514,8 @@ addr VPN_TO_MEM(int pid, addr address, int op){
 	else if(page_table_addr==0xff) {
 		// printf("swapping in VPN to MEM 1");
 		page_table_addr = swap(page_id);
+		proc_reg[pid] = page_table_addr;
+		printf("Put page table for PID %d into physical frame %u\n", pid, page_table_addr>>4);
 	}
 	else if(page_table_addr>0x3f) return OUT_OF_BOUNDS;
 	addr VPN = address&0x30;//gets the VPN from the bits 4 and 5 from the virtual address
