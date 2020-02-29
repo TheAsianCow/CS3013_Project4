@@ -29,10 +29,12 @@
 //debug modes
 #define RUN 1 //this is just to give the program instructions for normal operation
 #define MEM_MAP 2
-#define MEM_DSK_MAP 3
-#define LIST_REG 4
-#define LIST_PTE 5
-#define FULL 6
+#define DSK_MAP 3
+#define MEM_DSK_MAP 4
+#define LIST_REG 5
+#define LIST_PTE 6
+#define LIST 7
+#define FULL 8
 
 //for displaying binary
 #define BYTE_TO_BINARY_PATTERN "%c%c%c%c%c%c%c%c"

@@ -68,9 +68,11 @@ int main(int argc, char* argv[]){
 	    		printf("To debug, type \"debug,<MODE>\"\n");
 	    		printf("MODES:\n");
 	    		printf("\tMEM_MAP: prints out the contents of the entire memory array\n");
+	    		printf("\tDSK_MAP: prints out the contents of the entire disk array\n");
 	    		printf("\tMEM_DSK_MAP: prints out the contents of the entire memory and disk array\n");
 	    		printf("\tLIST_REG: prints out the contents of free_list and proc_reg, which are the Page_IDs occupying the page frames in memory and the locations of the page table for each process respectively\n");
 	    		printf("\tLIST_PTE: prints out the page table entries for each process\n");
+	    		printf("\tLIST: prints out the contents of both free_list and proc_reg\n");
 	    		printf("\tFULL: prints out all of the above information\n");
 
 	    		// if (exit_mem_man() == 1) exit(1);
@@ -141,10 +143,12 @@ int isValidArgs(char** args, int num_args) {
 	}
 	if((num_args==2)&&(strcmp(args[0],"debug")==0)){
 		if(strncmp(args[1],"FULL",4)==0) return FULL;
-		if(strncmp(args[1],"MEM_MAP",7)==0) return MEM_MAP;
 		if(strncmp(args[1],"MEM_DSK_MAP",11)==0) return MEM_DSK_MAP;
+		if(strncmp(args[1],"MEM_MAP",7)==0) return MEM_MAP;
+		if(strncmp(args[1],"DSK_MAP",7)==0) return DSK_MAP;
 		if(strncmp(args[1],"LIST_REG",8)==0) return LIST_REG;
 		if(strncmp(args[1],"LIST_PTE",8)==0) return LIST_PTE;
+		if(strncmp(args[1],"LIST",4)==0) return LIST;
 		return LIST_REG;
 	}
 	if (num_args != 4) {
@@ -247,13 +251,13 @@ int allocate(int pid, addr v_address, uint8_t val) {
 	// printf("VPN = %u\n", VPN);
 	// printf("PTE offset = %u\n", PTE_offset);
 	addr PTE_addr = page_table_addr + PTE_offset;
+	page_id = pid*5+PTE_offset+1;
 
 
 	//now that we have the address to the page table, look at the entry corresponding to the virtual address and check if there's already an entry
 	addr PTE = mem[PTE_addr];
 	addr tmp_PFN = PTE&0x30;
 	if(PTE==0x80){//this is a new entry
-		page_id = pid*5+PTE_offset+1;
 		PFN = find_free(page_id);
 		if(PFN>0x3f){
 			err_handler(PFN, pid);
@@ -263,13 +267,23 @@ int allocate(int pid, addr v_address, uint8_t val) {
 		printf("Mapped virtual address %u (page %d) into physical frame %d\n", v_address, PTE_offset, PFN>>4);
 	}
 	else if((PTE&0x01)!=(val&0x01)){//check the protection bit to see if its different from value
-		mem[PTE_addr] = tmp_PFN+VAL_BIT+val;
-		printf("Updating permissions for virtual page %d (frame %d)\n",PTE_offset,tmp_PFN>>4);
+		int i;
+		addr valid = 0x00;
+		tmp_PFN = 0x00;
+		for(i = 0; i < 4; i++){
+			if(page_id==free_list[i]){//if the page for which we're updating the status of is in memory, then we need to update its PTE
+				valid = VAL_BIT;
+				tmp_PFN = i<<4;
+			}
+		}
+		mem[PTE_addr] = tmp_PFN+valid+val;
+		if(valid)printf("Updating permissions for virtual page %d (frame %d)\n",PTE_offset,tmp_PFN>>4);
+		else printf("Updating permissions for virtual page %d (frame in disk)\n",PTE_offset);
 	}
 	else err_handler(PAGE_OVERLAP,tmp_PFN>>4);//PFN already exists
 
 	// printf("finished allocate\n");
-	printf("free_list: %d, %d, %d, %d\n", free_list[0], free_list[1], free_list[2], free_list[3]);
+	// printf("free_list: %d, %d, %d, %d\n", free_list[0], free_list[1], free_list[2], free_list[3]);
 	return 0;
 }
 
@@ -359,8 +373,9 @@ addr swap(int page_ID) {
 	}
 	else {
 		printf("attempting to evict\n");
-		free_PFN = evict(page_ID);
+		free_PFN = evict(page_ID);	
 		frame_index = free_PFN >> 4;
+		free_list[frame_index] = page_ID; //update free_list to PID
 	}
 
 // 	copy page to mem
@@ -425,36 +440,31 @@ addr evict(int add_page_ID) {
 			}
 		}
 
-// 		if the page table corresponding to the page is in mem
-		if (pt_frame_idx != -1) {
+		if(pt_frame_idx != -1){//if the page table corresponding to the page is in mem
 			printf("the corresponding page table is in memory\n");
-// 			get PTE (PT + PID % 5)
+			// get PTE (PT + PID % 5)
 			page_table_addr = proc_reg[evict_pid];
 			PTE_addr = page_table_addr + offset;
 			PTE = mem[PTE_addr];
-// 			update PTE's valid bit
+			// update PTE's valid bit
 			PTE = PTE & 0xfd;
 			mem[PTE_addr] = PTE;
-// 			copy the banished page to disk
+			// copy the banished page to disk
 			memcpy(dsk + (16 * evict_page_ID), mem + (16 * rnd_rbn_cnt), 16);
-
-		}
-
-// 		the page table corresponding to the page is in disk
-		else {
+		}else{//the page table corresponding to the page is in disk
 			printf("the corresponding page table is in disk\n");
-// 			copy page into disk
+			// copy page into disk
 			memcpy(dsk + (16 * evict_page_ID), mem + (16 * rnd_rbn_cnt), 16);
-// 			copy page table to mem
+			// copy page table to mem
 			memcpy(mem + (16 * rnd_rbn_cnt), dsk + (evict_pid * 5 * 16), 16);
-// 			get PTE (PT + PID % 5)
+			// get PTE (PT + PID % 5)
 			page_table_addr = evict_frame_idx * 16;
 			PTE_addr = page_table_addr + offset;
 			PTE = mem[PTE_addr];
-// 			update PTE's valid bit
+			// update PTE's valid bit
 			PTE = PTE & 0xfd;
 			mem[PTE_addr] = PTE;
-// 			copy page table back to disk
+			// copy page table back to disk
 			memcpy(dsk + (evict_pid * 5 * 16), mem + (16 * rnd_rbn_cnt), 16);
 		}
 
@@ -539,7 +549,16 @@ void debugger(int mode){
 	int i = 0;
 	switch(mode){
 		case FULL:
-			for(i = MEM_DSK_MAP; i < FULL; i++) debugger(i);
+			debugger(MEM_DSK_MAP);
+			debugger(LIST);
+			break;
+		case LIST:
+			debugger(LIST_REG);
+			debugger(LIST_PTE);
+			break;
+		case MEM_DSK_MAP:
+			debugger(MEM_MAP);
+			debugger(DSK_MAP);
 			break;
 		case MEM_MAP:
 			printf("Memory dump:\n");
@@ -548,12 +567,7 @@ void debugger(int mode){
 				printf("mem[%d]: %u\n", i, mem[i]);
 			}
 			break;
-		case MEM_DSK_MAP:
-			printf("Memory dump:\n");
-			for(i = 0; i < 64; i++){
-				if(i%16==0)printf("MEMORY PAGE FRAME %d\n",i/16);
-				printf("mem[%d]: %u\n", i, mem[i]);
-			}
+		case DSK_MAP:
 			printf("Disk dump:\n");
 			for(i = 0; i < 320; i++){
 				if(i%16==0)printf("DISK PAGE ID %d\n",i/16);
@@ -562,7 +576,7 @@ void debugger(int mode){
 			break;
 		case LIST_REG:
 			printf("Page IDs in memory (FRAME#:PAGE_ID): 0:%d, 1:%d, 2:%d, 3:%d\n", free_list[0],free_list[1],free_list[2],free_list[3]);
-			printf("Page table address locations (PID:ADDRESS): 0:%u, 1:%u, 2:%u, 3:%u\n", proc_reg[0], proc_reg[1], proc_reg[2], proc_reg[3]);
+			printf("Page table address locations (PID:ADDRESS): 0:0x%x, 1:0x%x, 2:0x%x, 3:0x%x\n", proc_reg[0], proc_reg[1], proc_reg[2], proc_reg[3]);
 			break;
 		case LIST_PTE:
 			printf("Reading page table entries in memory:\n");
@@ -574,13 +588,13 @@ void debugger(int mode){
 				else if(page_table_addr==0xff) printf("PID %d's page table is in disk\n",i);
 				else{
 					printf("PID %d's page table:\n", i);
-					for(j = 0; j < 4; j++) printf(BYTE_TO_BINARY_PATTERN"\n", BYTE_TO_BINARY(mem[page_table_addr+j]));
+					for(j = 0; j < 4; j++) printf("PAGE_ID:%d, PTE:"BYTE_TO_BINARY_PATTERN"\n",i*5+j+1,BYTE_TO_BINARY(mem[page_table_addr+j]));
 				}
 			}
 			break;
 		default:
 			printf("Invalid or no debug mode given, printing out page IDs and page table locations\n");
-			debugger(LIST_REG);
+			debugger(LIST);
 			break;
 	}
 }
