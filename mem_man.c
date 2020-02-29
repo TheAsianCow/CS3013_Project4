@@ -240,7 +240,7 @@ int allocate(int pid, addr v_address, uint8_t val) {
 		page_table_addr = proc_reg[pid];
 		printf("Put page table for PID %d into physical frame %u\n", pid, PFN>>4);
 	}else if(page_table_addr==0xff){//process has a page table in disk
-		printf("swapping to get page table from\n");
+		// printf("swapping to get page table from\n");
 		PFN = swap(page_id);//find a free page for the pid's page table
 		if(PFN>0x3f){
 			err_handler(PFN, pid,0);
@@ -248,7 +248,6 @@ int allocate(int pid, addr v_address, uint8_t val) {
 		}
 		proc_reg[pid] = PFN;
 		page_table_addr = proc_reg[pid];
-		printf("Put page table for PID %d into physical frame %u\n", pid, PFN>>4);
 	}else if(page_table_addr>0x3f){
 		err_handler(page_table_addr, pid,0);
 		return -1;
@@ -392,8 +391,8 @@ addr swap(int page_ID) {
 // 	copy page to mem
 	memcpy(mem + (16 * frame_index), dsk + (16 * page_ID), 16);
 	
-
-	// printf("Put page table for PID 1 into physical frame %d\n", free_PFN >> 4);
+	if(page_ID%5==0) printf("Put page table for PID %d into physical frame %u\n", pid, free_PFN>>4);
+	else printf("Swapped disk slot %d into frame %d\n", page_ID, free_PFN >> 4);
 	// return PFN of now empty page frame in phys mem
 	return free_PFN;
 }
@@ -515,7 +514,7 @@ addr VPN_TO_MEM(int pid, addr address, int op){
 		// printf("swapping in VPN to MEM 1");
 		page_table_addr = swap(page_id);
 		proc_reg[pid] = page_table_addr;
-		printf("Put page table for PID %d into physical frame %u\n", pid, page_table_addr>>4);
+		// printf("Put page table for PID %d into physical frame %u\n", pid, page_table_addr>>4);
 	}
 	else if(page_table_addr>0x3f) return OUT_OF_BOUNDS;
 	addr VPN = address&0x30;//gets the VPN from the bits 4 and 5 from the virtual address

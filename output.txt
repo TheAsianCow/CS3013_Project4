@@ -246,7 +246,9 @@ Instructions? 1,allocate,0,0
 
 Swapped frame 0 to disk at swap slot 0
 Put page table for PID 1 into physical frame 0
+Put page table for PID 1 into physical frame 0
 Swapped frame 1 to disk at swap slot 1
+Swapped disk slot 6 into frame 1
 Mapped virtual address 0 (page 0) into physical frame 1
 
 Instructions? debug,LIST
@@ -268,6 +270,7 @@ Instructions? 0,load,7,0
 Swapped frame 2 to disk at swap slot 2
 Put page table for PID 0 into physical frame 2
 Swapped frame 3 to disk at swap slot 3
+Swapped disk slot 1 into frame 3
 The value 255 is at virtual address 7 (physical address 55)
 
 Instructions? debug,LIST
@@ -313,6 +316,7 @@ PID 3's page table does not exist
 Instructions? 1,allocate,20,1
 
 Swapped frame 1 to disk at swap slot 6
+Swapped disk slot 7 into frame 1
 Mapped virtual address 20 (page 1) into physical frame 1
 
 Instructions? debug,LIST
@@ -336,6 +340,7 @@ PID 3's page table does not exist
 Instructions? 1,allocate,35,1
 
 Swapped frame 2 to disk at swap slot 0
+Swapped disk slot 8 into frame 2
 Mapped virtual address 35 (page 2) into physical frame 2
 
 Instructions? debug,LIST
@@ -355,6 +360,7 @@ PID 3's page table does not exist
 Instructions? 1,allocate,48,1
 
 Swapped frame 3 to disk at swap slot 1
+Swapped disk slot 9 into frame 3
 Mapped virtual address 48 (page 3) into physical frame 3
 
 Instructions? debug,LIST
@@ -373,10 +379,10 @@ PID 3's page table does not exist
 
 Instructions? 0,allocate,48,1
 
-swapping to get page table from
 Swapped frame 0 to disk at swap slot 5
 Put page table for PID 0 into physical frame 0
 Swapped frame 1 to disk at swap slot 7
+Swapped disk slot 4 into frame 1
 Mapped virtual address 48 (page 3) into physical frame 1
 
 Instructions? debug,LIST
@@ -442,6 +448,7 @@ PID 3's page table does not exist
 Instructions? 0,store,12,69
 
 Swapped frame 3 to disk at swap slot 9
+Swapped disk slot 1 into frame 3
 Stored value 69 at virtual address 12 (physical address 60)
 
 Instructions? debug,LIST
@@ -465,6 +472,7 @@ PID 3's page table does not exist
 Instructions? 0,load,7,0
 
 Swapped frame 1 to disk at swap slot 4
+Swapped disk slot 1 into frame 1
 The value 255 is at virtual address 7 (physical address 23)
 
 Instructions? debug,LIST
@@ -489,7 +497,9 @@ Instructions? 2,allocate,50,0
 
 Swapped frame 2 to disk at swap slot 5
 Put page table for PID 2 into physical frame 2
+Put page table for PID 2 into physical frame 2
 Swapped frame 3 to disk at swap slot 1
+Swapped disk slot 14 into frame 3
 Mapped virtual address 50 (page 3) into physical frame 3
 
 Instructions? debug,LIST
@@ -514,7 +524,9 @@ Instructions? 3,allocate,2,1
 
 Swapped frame 0 to disk at swap slot 0
 Put page table for PID 3 into physical frame 0
+Put page table for PID 3 into physical frame 0
 Swapped frame 1 to disk at swap slot 1
+Swapped disk slot 16 into frame 1
 Mapped virtual address 2 (page 0) into physical frame 1
 
 Instructions? debug,LIST
@@ -561,6 +573,7 @@ MODES:
 Instructions? 3,allocate,17,1
 
 Swapped frame 2 to disk at swap slot 10
+Swapped disk slot 17 into frame 2
 Mapped virtual address 17 (page 1) into physical frame 2
 
 Instructions? debug,LIST
@@ -580,6 +593,7 @@ PAGE_ID:19, PTE:10000000
 Instructions? 3,allocate,39,1
 
 Swapped frame 3 to disk at swap slot 14
+Swapped disk slot 18 into frame 3
 Mapped virtual address 39 (page 2) into physical frame 3
 
 Instructions? debug,LIST
@@ -598,7 +612,6 @@ PAGE_ID:19, PTE:10000000
 
 Instructions? 2,allocate,50,1
 
-swapping to get page table from
 Swapped frame 0 to disk at swap slot 15
 Put page table for PID 2 into physical frame 0
 Updating permissions for virtual page 3 (frame in disk)
@@ -619,10 +632,10 @@ PID 3's page table is in disk
 
 Instructions? 3,allocate,54,1
 
-swapping to get page table from
 Swapped frame 1 to disk at swap slot 16
 Put page table for PID 3 into physical frame 1
 Swapped frame 2 to disk at swap slot 17
+Swapped disk slot 19 into frame 2
 Mapped virtual address 54 (page 3) into physical frame 2
 
 Instructions? debug,LIST
@@ -646,6 +659,7 @@ PAGE_ID:19, PTE:00100011
 Instructions? 2,allocate,3,1
 
 Swapped frame 3 to disk at swap slot 18
+Swapped disk slot 11 into frame 3
 Mapped virtual address 3 (page 0) into physical frame 3
 
 Instructions? debug,LIST
@@ -669,6 +683,7 @@ PAGE_ID:19, PTE:00100011
 Instructions? 3,load,16,0
 
 Swapped frame 0 to disk at swap slot 10
+Swapped disk slot 32 into frame 0
 The value 0 is at virtual address 16 (physical address 0)
 
 Instructions? debug,LIST
@@ -690,6 +705,7 @@ Instructions? 2,store,60,9
 Swapped frame 1 to disk at swap slot 15
 Put page table for PID 2 into physical frame 1
 Swapped frame 2 to disk at swap slot 19
+Swapped disk slot 59 into frame 2
 Stored value 9 at virtual address 60 (physical address 44)
 
 Instructions? debug,FULL
