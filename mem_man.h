@@ -63,7 +63,7 @@ addr find_free(int pid);
 addr swap(int page_ID);
 addr evict(int add_page_ID);
 addr VPN_TO_MEM(int pid, addr address, int op);
-void err_handler(addr err, int err_val);
+void err_handler(addr err, int err_val, int err_val2);
 void debugger(int mode);
 
 #endif
